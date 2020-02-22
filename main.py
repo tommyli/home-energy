@@ -1,3 +1,4 @@
+from pathlib import Path
 from datetime import datetime, timedelta, date
 from google.cloud import storage
 from google.cloud.logging.handlers import CloudLoggingHandler, setup_logging
@@ -9,7 +10,8 @@ from enlighten.enlighten import get_enlighten_stats_resp, get_already_fetched
 from common import idate_range
 import os
 from nem12 import NEM12_STORAGE_PATH_PREFIX
-from nem12.nem12 import Nem12Merger
+from nem12.nem12 import Nem12Merger, handle_nem12_blob
+import csv
 
 GCP_PROJECT = os.environ.get(
     'GCP_PROJECT', 'GCP_PROJECT not set.')
@@ -21,6 +23,8 @@ GCP_LOG_HANDLER = CloudLoggingHandler(GCP_LOG_CLIENT)
 gcp_logger = logging.getLogger()
 gcp_logger.setLevel(logging.INFO)
 gcp_logger.addHandler(GCP_LOG_HANDLER)
+
+storage_client = storage.Client()
 
 
 def on_schedule_post(request):
@@ -39,7 +43,6 @@ def on_schedule_post(request):
     # Enlighten API free plan only allows maximum of 10 API calls per minute
     MAX_FETCHED_BATCH_SIZE = 10
 
-    storage_client = storage.Client()
     bucket = storage_client.get_bucket(GCP_STORAGE_BUCKET_ID)
 
     min_date = datetime.combine(date.fromisoformat(
@@ -66,5 +69,32 @@ def on_schedule_post(request):
             fetched_counter += 1
         else:
             gcp_logger.debug(f"blob {blob_name} already exists, skipping.")
+
+    return ('', 200)
+
+
+def on_storage_blob(data, context):
+    """Background Cloud Function to be triggered by Cloud Storage.
+       This generic function logs relevant data when a file is changed.
+
+    Args:
+        data (dict): The Cloud Functions event payload.
+        context (google.cloud.functions.Context): Metadata of triggering event.
+    Returns:
+        None; the output is written to Stackdriver Logging
+    """
+    gcp_logger.info(f"event_id={context.event_id}, event_type={context.event_type}, bucket={data.get('bucket')}, name={data.get('name')}, metageneration={data.get('metageneration')}, created={data.get('timeCreated')}, updated={data.get('updated')}")
+
+    blob_name = data['name']
+    bucket_name = data['bucket']
+
+    bucket = storage_client.get_bucket(bucket_name)
+
+    if (blob_name.startswith(NEM12_STORAGE_PATH_PREFIX)):
+        handle_nem12_blob(data, context, storage_client,
+                          bucket, blob_name, gcp_logger)
+    else:
+        gcp_logger.debug(
+            f"Skipping storage event event_id={context.event_id}, event_type={context.event_type}")
 
     return ('', 200)

@@ -1,13 +1,12 @@
 from unittest.mock import Mock
 from datetime import datetime, timedelta, date
-
-import main
+from common import idate_range
 
 
 def test_idate_range():
     from_date = datetime.fromisoformat('2020-01-01T00:00:00')
     to_date = datetime.fromisoformat('2020-01-03T00:00:00')
-    actual_result = list(main._idate_range(from_date, to_date))
+    actual_result = list(idate_range(from_date, to_date))
 
     assert actual_result == [
         datetime.fromisoformat('2020-01-01T00:00:00'),

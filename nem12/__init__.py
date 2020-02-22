@@ -1,0 +1,4 @@
+import os
+
+NEM12_STORAGE_PATH_PREFIX = os.environ.get(
+    'NEM12_STORAGE_PATH_PREFIX', 'NEM12_STORAGE_PATH_PREFIX not set.')
