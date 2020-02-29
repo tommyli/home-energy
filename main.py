@@ -9,8 +9,8 @@ from enlighten import ENLIGHTEN_API_KEY, ENLIGHTEN_USER_ID, ENLIGHTEN_SYSTEM_ID,
 from enlighten.enlighten import get_enlighten_stats_resp, get_already_fetched
 from common import idate_range
 import os
-from nem12 import NEM12_STORAGE_PATH_PREFIX
-from nem12.nem12 import Nem12Merger, handle_nem12_blob
+from nem12 import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
+from nem12.nem12 import Nem12Merger, handle_nem12_blob_in, handle_nem12_blob_merged
 import csv
 
 GCP_PROJECT = os.environ.get(
@@ -83,15 +83,22 @@ def on_storage_blob(data, context):
     Returns:
         None; the output is written to Stackdriver Logging
     """
-    gcp_logger.info(f"event_id={context.event_id}, event_type={context.event_type}, bucket={data.get('bucket')}, name={data.get('name')}, metageneration={data.get('metageneration')}, created={data.get('timeCreated')}, updated={data.get('updated')}")
-
-    blob_name = data['name']
-    bucket_name = data['bucket']
+    event_id = context.event_id
+    event_type = context.event_type
+    blob_created = data.get('timeCreated')
+    blob_updated = data.get('updated')
+    blob_name = data.get('name')
+    bucket_name = data.get('bucket')
+    gcp_logger.info(
+        f"event_id={event_id}, event_type={event_type}, bucket={bucket_name}, name={blob_name}, metageneration={data.get('metageneration')}, created={blob_created}, updated={blob_updated}")
 
     bucket = storage_client.get_bucket(bucket_name)
 
-    if (blob_name.startswith(NEM12_STORAGE_PATH_PREFIX)):
-        handle_nem12_blob(data, context, storage_client,
+    if (blob_name.startswith(NEM12_STORAGE_PATH_IN)):
+        handle_nem12_blob_in(data, context, storage_client,
+                          bucket, blob_name, gcp_logger)
+    elif (blob_name.startswith(NEM12_STORAGE_PATH_MERGED)):
+        handle_nem12_blob_merged(data, context, storage_client,
                           bucket, blob_name, gcp_logger)
     else:
         gcp_logger.debug(
