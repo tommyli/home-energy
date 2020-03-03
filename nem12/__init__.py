@@ -1,6 +1,0 @@
-import os
-
-NEM12_STORAGE_PATH_IN = os.environ.get(
-    'NEM12_STORAGE_PATH_IN', 'NEM12_STORAGE_PATH_IN not set.')
-NEM12_STORAGE_PATH_MERGED = os.environ.get(
-    'NEM12_STORAGE_PATH_MERGED', 'NEM12_STORAGE_PATH_MERGED not set.')

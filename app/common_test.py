@@ -1,6 +1,7 @@
-from unittest.mock import Mock
 from datetime import datetime, timedelta, date
-from common import idate_range
+from unittest.mock import Mock
+
+from app.common import idate_range
 
 
 def test_idate_range():

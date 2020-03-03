@@ -3,12 +3,11 @@ python merge_nem12.py -o <output_path> <nem12_1.csv> [nem12_2.csv...]
 output: multiples of nem12_{nmi}.csv depending on how many NMIs in input files
 """
 
-import sys
-import getopt
+from datetime import datetime
 from pathlib import Path
 import csv
-from datetime import datetime
-import nem12
+import getopt
+import sys
 
 
 def main(argv=None):
