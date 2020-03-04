@@ -1,5 +1,7 @@
 import os
 
+ENLIGHTEN_URL = os.environ.get(
+    'ENLIGHTEN_URL', 'ENLIGHTEN_URL not set.')
 ENLIGHTEN_SYSTEM_ID = os.environ.get(
     'ENLIGHTEN_SYSTEM_ID', 'ENLIGHTEN_SYSTEM_ID not set.')
 ENLIGHTEN_API_KEY = os.environ.get(
@@ -11,12 +13,18 @@ ENLIGHTEN_DATA_MIN_DATE = os.environ.get(
 ENLIGHTEN_STORAGE_PATH_PREFIX = os.environ.get(
     'ENLIGHTEN_STORAGE_PATH_PREFIX', 'ENLIGHTEN_STORAGE_PATH_PREFIX not set.')
 
+LEMS_URL = os.environ.get(
+    'LEMS_URL', 'LEMS_URL not set.')
 LEMS_USER = os.environ.get(
     'LEMS_USER', 'LEMS_USER not set.')
 LEMS_PASSWORD = os.environ.get(
     'LEMS_PASSWORD', 'LEMS_PASSWORD not set.')
 LEMS_BATTERY_ID = os.environ.get(
     'LEMS_BATTERY_ID', 'LEMS_BATTERY_ID not set.')
+LEMS_STORAGE_PATH_PREFIX = os.environ.get(
+    'LEMS_STORAGE_PATH_PREFIX', 'LEMS_STORAGE_PATH_PREFIX not set.')
+LEMS_DATA_MIN_DATE = os.environ.get(
+    'LEMS_DATA_MIN_DATE', 'LEMS_DATA_MIN_DATE not set.')
 
 NEM12_STORAGE_PATH_IN = os.environ.get(
     'NEM12_STORAGE_PATH_IN', 'NEM12_STORAGE_PATH_IN not set.')

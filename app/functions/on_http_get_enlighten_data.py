@@ -9,7 +9,7 @@ from .. import init_gcp_logger
 from .. import init_storage_client
 
 from ..common import idate_range
-from ..enlighten import get_already_fetched
+from ..common import get_already_fetched
 from ..enlighten import get_enlighten_stats_resp
 
 
@@ -40,7 +40,7 @@ def on_http_get_enlighten_data(request):
     yesterday = datetime.combine(
         date.today(), datetime.min.time()) - timedelta(days=1)
     already_fetched = get_already_fetched(
-        storage_client, bucket, ALREADY_FETCHED_SIZE_THRESHOLD_BYTES)
+        storage_client, bucket, ENLIGHTEN_STORAGE_PATH_PREFIX, ALREADY_FETCHED_SIZE_THRESHOLD_BYTES)
     fetched_counter = 0
 
     for as_of_date in idate_range(min_date, yesterday):
