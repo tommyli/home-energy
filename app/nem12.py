@@ -9,6 +9,8 @@ import csv
 import getopt
 import sys
 
+from . import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
+
 
 def main(argv=None):
     if argv is None:
@@ -70,12 +72,12 @@ def main(argv=None):
 def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logger):
     logger.info(f"handle_nem12_blob_in()")
     nem12_blobs = [blob for blob in (storage_client.list_blobs(
-        bucket_or_name=bucket, prefix=nem12.NEM12_STORAGE_PATH_IN)) if (blob.name.endswith('.csv'))]
+        bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_IN)) if (blob.name.endswith('.csv'))]
 
     Path(
-        f"/tmp/{nem12.NEM12_STORAGE_PATH_IN}").mkdir(parents=True, exist_ok=True)
+        f"/tmp/{NEM12_STORAGE_PATH_IN}").mkdir(parents=True, exist_ok=True)
     Path(
-        f"/tmp/{nem12.NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
+        f"/tmp/{NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
 
     logger.info(
         f"Merging blobs [{str.join(',', [n12.name for n12 in nem12_blobs])}]")
@@ -93,7 +95,7 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
         nmis = set([nmr.nmi for nmr in nmi_meter_registers])
 
         for nmi in nmis:
-            tmp_file_name = f"/tmp/{nem12.NEM12_STORAGE_PATH_MERGED}/nem12_{nmi}.csv"
+            tmp_file_name = f"/tmp/{NEM12_STORAGE_PATH_MERGED}/nem12_{nmi}.csv"
             logger.info(f"Writing to file_name={tmp_file_name}")
 
             with open(tmp_file_name, mode="w") as csv_file:
@@ -106,21 +108,23 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
                         for vq in iday.variable_qualities:
                             csv_writer.writerow(vq.line_items)
 
-            new_blob_name = f"{nem12.NEM12_STORAGE_PATH_MERGED}/nem12_{nmi}.csv"
+            new_blob_name = f"{NEM12_STORAGE_PATH_MERGED}/nem12_{nmi}.csv"
             logger.info(f"Writing to new_blob_name={new_blob_name}")
             new_blob = bucket.blob(new_blob_name)
             with open(tmp_file_name, mode="rb") as tmp_file_obj:
                 new_blob.upload_from_file(
                     file_obj=tmp_file_obj, content_type='text/csv')
 
+            os.remove(tmp_file_name)
+
 
 def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, logger):
     logger.info(f"handle_nem12_blob_merged()")
     merged_blobs = [blob for blob in (storage_client.list_blobs(
-        bucket_or_name=bucket, prefix=nem12.NEM12_STORAGE_PATH_MERGED)) if (blob.name.endswith('.csv'))]
+        bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_MERGED)) if (blob.name.endswith('.csv'))]
 
     Path(
-        f"/tmp/{nem12.NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
+        f"/tmp/{NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
 
     nem12_files = []
     for n12 in merged_blobs:
