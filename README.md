@@ -2,6 +2,8 @@
 
 Hobby project to procure all home energy data from electricity meter, solar panels and home battery for presentation and analysis.
 
+Unless one has the exact same home energy setup, this project will not be relevant.
+
 ## Getting Started
 
 ### Prerequisites
@@ -15,6 +17,8 @@ This project uses the following Google Cloud Platform features:
 * [Cloud Firestore](https://cloud.google.com/firestore/docs) - [Native Mode](https://cloud.google.com/firestore/docs/firestore-or-datastore)
 
 Getting Started on Google Cloud Platform is not easy as the ecosystem is huge with large number of [services](https://cloud.google.com/docs/overview/cloud-platform-services) offered.  See [Get started with Google Cloud](https://cloud.google.com/docs).
+
+All Google Cloud Platform features in this project share the same [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating_a_service_account) and this is not recommended, see [Enforce least privilege with recommendations](https://cloud.google.com/iam/docs/recommender-overview)
 
 #### Python Development Environment
 
@@ -56,8 +60,8 @@ TODO - Use Google Cloud Build?
 
 This function runs on [storage triggers](https://cloud.google.com/functions/docs/calling/storage).  More specifically, blobs added to storage with following prefix namespaces are handled:
 
-* nem12/in (env var = `$NEM12_STORAGE_PATH_IN`) - All NEM12 files are manually placed here.  All NEM12 files are merged and placed into nem12/merged folder.  ($ENLIGHTEN_STORAGE_PATH_PREFIX)
-* nem12/merged (env var = `$NEM12_STORAGE_PATH_MERGED`) - All merged NEM12 files grouped by one NMI per file are placed here.  ()
+* nem12/in (env var = `$NEM12_STORAGE_PATH_IN`) - All NEM12 files are manually placed here.  All NEM12 files are merged and placed into nem12/merged folder.
+* nem12/merged (env var = `$NEM12_STORAGE_PATH_MERGED`) - All merged NEM12 files grouped by one NMI per file are placed here.
 * enlighten (env var = `$ENLIGHTEN_STORAGE_PATH_PREFIX`) - All solar panels data from Enlighten API are placed here one JSON file per day.
 * lems (env var = `$LEMS_STORAGE_PATH_PREFIX`) - All LEMS battery data are placed here, one CSV file per day.
 
