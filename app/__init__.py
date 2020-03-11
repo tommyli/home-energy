@@ -35,6 +35,7 @@ GCP_STORAGE_BUCKET_ID = os.environ.get(
     'GCP_STORAGE_BUCKET_ID', 'GCP_STORAGE_BUCKET_ID not set.')
 
 storage_client = None
+firestore_client = None
 gcp_logger = None
 
 
@@ -49,6 +50,19 @@ def init_storage_client():
     storage_client = storage.Client()
 
     return storage_client
+
+
+def init_firestore_client():
+    from google.cloud import firestore
+
+    global firestore_client
+
+    if firestore_client:
+        return firestore_client
+
+    firestore_client = firestore.Client()
+
+    return firestore_client
 
 
 def init_gcp_logger():
