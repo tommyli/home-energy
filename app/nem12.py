@@ -190,7 +190,7 @@ class Nem12Merger():
                             row[1], '%Y%m%d')
                         quality = row[int(interval_count + 2)]
                         row_iday = IntervalDay(
-                            self.current_nmr, row[1], quality, row)
+                            self.current_nmr, interval_date, quality, row)
                         existing_iday = next(
                             (iday for iday in self.current_nmr.interval_days if (iday == row_iday)), None)
                         if (existing_iday == None):
