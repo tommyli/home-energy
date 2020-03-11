@@ -186,7 +186,9 @@ class Nem12Merger():
 
                     elif (row[0] == '300'):
                         interval_count = 1440 / self.current_nmr.interval_length
-                        quality = row[int(interval_count + 2 + 1)]
+                        interval_date = datetime.strptime(
+                            row[1], '%Y%m%d')
+                        quality = row[int(interval_count + 2)]
                         row_iday = IntervalDay(
                             self.current_nmr, row[1], quality, row)
                         existing_iday = next(
