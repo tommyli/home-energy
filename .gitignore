@@ -1,6 +1,8 @@
 # Custom
-.secrets
 .gcloudignore
+.secrets
+.snippets
+data
 
 # End of Custom
 
