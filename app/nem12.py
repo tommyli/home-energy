@@ -1,75 +1,30 @@
-"""Take input NEM12 CSV files and merges them into one
-python merge_nem12.py -o <output_path> <nem12_1.csv> [nem12_2.csv...]
-output: multiples of nem12_{nmi}.csv depending on how many NMIs in input files
+"""
+NEM12 module, everything related to NEM12 parsing, handling of NEM12 blob events
+and NEM12 calculations.
 """
 
+from datetime import date
 from datetime import datetime
 from pathlib import Path
 import csv
 import getopt
+import os
 import sys
 
+from google.cloud import firestore
+from google.cloud.storage import Blob
+import pandas as pd
+
+from . import init_firestore_client
 from . import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
 
 
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv
-
-    nem12_files = []
-    output_path = ''
-
-    try:
-        opts, args = getopt.getopt(
-            argv[1:], "ho:", ["help", "output path"])
-    except getopt.error as msg:
-        print(msg)
-        print("for help use --help")
-        sys.exit(2)
-    for option, arg in opts:
-        if option in ("-h", "--help"):
-            print(__doc__)
-            sys.exit(0)
-        if option in ("-o", "--out"):
-            if not arg:
-                print(__doc__)
-                sys.exit(0)
-            output_path = arg if arg[-1] == '/' else f"{arg}/"
-
-    if (not len(argv) > 3):
-        print(__doc__)
-        sys.exit(0)
-
-    nem12_files = argv[3:]
-    print(output_path)
-
-    merger = Nem12Merger(nem12_files)
-    nmi_meter_registers = merger.nmi_meter_registers
-
-    if (len(nmi_meter_registers) == 0):
-        sys.exit(0)
-    else:
-        nmis = set([nmr.nmi for nmr in nmi_meter_registers])
-
-        for nmi in nmis:
-            file_name = f"{output_path}nem12_{nmi}.csv"
-            print(f"Writing to {file_name}")
-            with open(file_name, mode="w") as csv_file:
-                csv_writer = csv.writer(csv_file, delimiter=',')
-                nmrs = [nmr for nmr in nmi_meter_registers if nmr.nmi == nmi]
-                for nmr in nmrs:
-                    csv_writer.writerow(nmr.line_items)
-                    for iday in nmr.interval_days:
-                        csv_writer.writerow(iday.line_items)
-                        for vq in iday.variable_qualities:
-                            csv_writer.writerow(vq.line_items)
-
-    print(nmi_meter_registers[0].interval_days[0])
-
-    print(nmi_meter_registers)
-
-
 def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logger):
+    """
+    Handle blob events in path NEM12_STORAGE_PATH_IN, merges all NEM12 files in this path
+    together and places in NEM12_STORAGE_PATH_MERGED path, one NMI per file.
+    """
+
     logger.info(f"handle_nem12_blob_in()")
     nem12_blobs = [blob for blob in (storage_client.list_blobs(
         bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_IN)) if (blob.name.endswith('.csv'))]
@@ -118,34 +73,113 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
             os.remove(tmp_file_name)
 
 
-def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, logger):
+def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, root_collection_name, logger):
+    """
+    Handle blob events in path NEM12_STORAGE_PATH_MERGED, parses the NEM12 blob (from the blob event),
+    groups consumption and generation data into dates and loads into Firestore.
+    This function only handles one NMI per NEM12 file, pre-processed by handle_nem12_blob_in()
+    """
+
     logger.info(f"handle_nem12_blob_merged()")
-    merged_blobs = [blob for blob in (storage_client.list_blobs(
-        bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_MERGED)) if (blob.name.endswith('.csv'))]
 
     Path(
         f"/tmp/{NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
 
+    blob = Blob(blob_name, bucket)
+
     nem12_files = []
-    for n12 in merged_blobs:
-        with open(f"/tmp/{n12.name}", 'wb') as file_obj:
-            n12.download_to_file(file_obj)
-            nem12_files.append(f"/tmp/{n12.name}")
+    with open(f"/tmp/{blob_name}", 'wb') as file_obj:
+        blob.download_to_file(file_obj)
+        nem12_files.append(f"/tmp/{blob_name}")
 
     nem12_parser = Nem12Merger(nem12_files)
     nmi_meter_registers = nem12_parser.nmi_meter_registers
 
     if (len(nmi_meter_registers) > 0):
         nmis = set([nmr.nmi for nmr in nmi_meter_registers])
-        logger.info(f"nmis={nmis}")
+        assert len(nmis) == 1, f"Expected only one NMI but found [{nmis}]"
 
-        # TODO - Load into Firestore
-        # for nmi in nmis:
-        #     nmrs = [nmr for nmr in nmi_meter_registers if nmr.nmi == nmi]
-        #     for nmr in nmrs:
-        #         for iday in nmr.interval_days:
-        #             logger.info(
-        #                 f"nmi={nmi}, nmr={nmr}, iday={iday}, len(iday.interval_values)={len(iday.interval_values)}")
+        nmi = list(nmis)[0]
+
+        flattened = nem12_parser.flatten_data()
+        df = pd.DataFrame(flattened)
+
+        df_agged = df.groupby(['nmi', 'interval_date', 'interval']).agg({'nmi': ['first'], 'interval_date': ['first'], 'interval': [
+            'first'], 'consumption': ['sum'], 'generation': ['sum'], 'quality': ['first'], 'interval_length': ['first'], 'uom': ['first']})
+        df_agged.columns = ["_".join(x) for x in df_agged.columns.ravel()]
+        df_agged.rename(columns={
+            'nmi_first': 'nmi',
+            'interval_date_first': 'interval_date',
+            'interval_first': 'interval',
+            'consumption_sum': 'consumption',
+            'generation_sum': 'generation',
+            'quality_first': 'quality',
+            'interval_length_first': 'interval_length',
+            'uom_first': 'uom',
+        }, inplace=True)
+
+    _merged_nem12_to_db(nmi, df_agged, root_collection_name, logger)
+
+    for tmp_n12_file in nem12_files:
+        os.remove(tmp_n12_file)
+
+
+def _merged_nem12_to_db(nmi, df_agged, root_collection_name, logger):
+    db = init_firestore_client()
+
+    site_doc = db.collection(root_collection_name).document(nmi)
+    site_doc.set({
+        'nmi': nmi,
+        'name': 'Home',
+        'interval_length': 30,
+        'uom': 'KWH',
+    })
+
+    # There is a limit of 500 on the number of batch writes
+    # Write one year of data at a time
+    first_year = df_agged['interval_date'].iloc[0].year
+    last_year = df_agged['interval_date'].iloc[-1].year
+
+    for year in range(first_year, last_year + 1):
+        df_year = df_agged[df_agged['interval_date'].dt.year == year]
+        nmi_date = ('-1', date(1990, 1, 1))
+        dailies = []
+        consumptions = []
+        generations = []
+
+        for row in df_year.iterrows():
+            key, values = row
+            nmi, interval_date, interval = key
+            curr_nmi_date = (nmi, interval_date)
+            daily_doc = site_doc.collection(
+                'dailies').document(interval_date.strftime('%Y%m%d'))
+
+            if (curr_nmi_date != nmi_date):
+                nmi_date = curr_nmi_date
+                consumptions = []
+                generations = []
+                dailies.append({'nmi': nmi, 'interval_date': interval_date,
+                                'consumptions': consumptions, 'generations': generations})
+
+            consumptions.append(values.consumption)
+            generations.append(values.generation)
+
+        batch = db.batch()
+
+        for daily in dailies:
+            interval_date = daily.get('interval_date')
+            daily_doc = site_doc.collection(
+                'dailies').document(interval_date.strftime('%Y%m%d'))
+            batch.set(daily_doc, {
+                'interval_date': datetime.combine(interval_date, datetime.min.time()),
+                'meter_consumptions': daily.get('consumptions'),
+                'meter_generations': daily.get('generations'),
+                'solar_generations': [],
+                'battery_charges': [],
+                'battery_discharges': [],
+            })
+
+        batch.commit()
 
 
 class Nem12Merger():
@@ -214,6 +248,45 @@ class Nem12Merger():
                     else:
                         print(f"skipping record type {row[0]}")
 
+    def flatten_data(self):
+        """
+        This implementation assumes the following:
+        * input and output interval_length = 30
+        * input and output UOM is KWH
+        * input registers starts with either E or B to represent consumption or generation respectively, all other streams (e.g. K, Q) result in 0.0 value
+
+        Returns:
+        * Flattenned representation of interval values with parent keys (e.g. nmi, meter, register, interval_date) associated.
+        * This representation is intended for convenient Pandas DataFrame creation.
+        """
+        result = []
+
+        for nmr in self.nmi_meter_registers:
+            uom = nmr.uom
+            interval_length = nmr.interval_length
+            assert uom == 'KWH', f"Current implementation only supports KWH but got uom={uom}"
+            assert interval_length == 30, f"Current implementation only supports interval length of 30 minutes but got interval_length={interval_length}"
+
+            for iday in nmr.interval_days:
+                quality = iday.quality
+
+                for i, value in enumerate(iday.interval_values):
+
+                    result.append({
+                        'nmi': nmr.nmi,
+                        'meter': nmr.meter,
+                        'register': nmr.register,
+                        'interval_date': iday.interval_date,
+                        'quality': iday.quality,
+                        'interval_length': nmr.interval_length,
+                        'uom': nmr.uom,
+                        'interval': i+1,
+                        'consumption': value if nmr.register.startswith('E') else 0.0,
+                        'generation': value if nmr.register.startswith('B') else 0.0,
+                    })
+
+        return result
+
 
 class NmiMeterRegister():
     def __init__(self, nmi, meter, register, register_config, uom, interval_length, line_items):
@@ -281,7 +354,3 @@ class VariableDayQuality():
 
     def __str__(self):
         return self.__repr__()
-
-
-if __name__ == "__main__":
-    sys.exit(main())

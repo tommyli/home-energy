@@ -45,7 +45,7 @@ def on_storage_blob(data, context):
                              bucket, blob_name, gcp_logger)
     elif (blob_name.startswith(NEM12_STORAGE_PATH_MERGED)):
         handle_nem12_blob_merged(data, context, storage_client,
-                                 bucket, blob_name, gcp_logger)
+                                 bucket, blob_name, 'sites', gcp_logger)
     else:
         gcp_logger.debug(
             f"Skipping storage event event_id={context.event_id}, event_type={context.event_type}")
