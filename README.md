@@ -36,6 +36,10 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+#### UI - React
+
+UI is done in ReactJS, refer to ui [README.md](ui/README.md).
+
 #### Accessing Data APIs
 
 Enlighten Developer account created and and API key setup.  Refer to their [Getting Started](https://developer.enphase.com/docs/quickstart.html) page.
@@ -47,8 +51,6 @@ Enlighten Developer account created and and API key setup.  Refer to their [Gett
 ```bash
 pytest
 ```
-
-TODO - More tests required
 
 ## Build
 
