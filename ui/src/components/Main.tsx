@@ -7,36 +7,40 @@ import Box from "@material-ui/core/Box";
 import Daily from "./Daily";
 import Weekly from "./Weekly";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { MuiPickersUtilsProvider } from "@material-ui/pickers";
+import DayJsUtils from "@date-io/dayjs";
 
 function Main() {
   return (
     <div>
       <React.Fragment>
         <CssBaseline />
-        <HeaderBar />
-        <Router>
-          <Grid container direction="column" spacing={0}>
-            <NavigationBar />
-            <Grid
-              container
-              direction="row"
-              spacing={3}
-              justify={"flex-start"}
-              alignItems={"flex-start"}
-            >
-              <Box m={5}>
-                <Switch>
-                  <Route path="/daily">
-                    <Daily />
-                  </Route>
-                  <Route path="/weekly">
-                    <Weekly />
-                  </Route>
-                </Switch>
-              </Box>
+        <MuiPickersUtilsProvider utils={DayJsUtils}>
+          <HeaderBar />
+          <Router>
+            <Grid container direction="column" spacing={0}>
+              <NavigationBar />
+              <Grid
+                container
+                direction="row"
+                spacing={3}
+                justify={"center"}
+                alignItems={"flex-start"}
+              >
+                <Box m={5}>
+                  <Switch>
+                    <Route path="/daily">
+                      <Daily />
+                    </Route>
+                    <Route path="/weekly">
+                      <Weekly />
+                    </Route>
+                  </Switch>
+                </Box>
+              </Grid>
             </Grid>
-          </Grid>
-        </Router>
+          </Router>
+        </MuiPickersUtilsProvider>
       </React.Fragment>
     </div>
   );

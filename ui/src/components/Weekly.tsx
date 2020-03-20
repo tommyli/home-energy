@@ -23,18 +23,34 @@ function Weekly() {
 export default Weekly;
 
 function WeeklyChart() {
-  let data = [
-    {
-      x: ["d", "e", "f", "g"],
-      y: [1, 2, 3, 4],
-      type: "bar"
-    }
-  ];
+  const consumptions = {
+    x: [1, 2, 3, 4],
+    y: [0.42, 0.3, 1.1, 0.56],
+    name: "Consumption",
+    type: "bar"
+  };
+  const generations = {
+    x: [1, 2, 3, 4],
+    y: [-1.19, -0.5, -0.87, 0.0],
+    name: "Generation",
+    type: "bar"
+  };
 
+  const data = [consumptions, generations];
+
+  const layout = {
+    barmode: "relative"
+  };
+
+  const config = {
+    editable: false,
+    scrollZoom: false,
+    displayModeBar: false,
+  };
   return (
     <div className="item">
       <div>
-        <Plot data={data} />
+        <Plot data={data} layout={layout} config={config} />
       </div>
     </div>
   );

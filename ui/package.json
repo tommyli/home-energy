@@ -3,7 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@date-io/dayjs": "1.x",
     "@material-ui/core": "^4.9.7",
+    "@material-ui/pickers": "^3.2.10",
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
@@ -12,7 +14,8 @@
     "@types/plotly.js": "^1.44.33",
     "@types/react": "^16.9.0",
     "@types/react-dom": "^16.9.0",
-    "firebase": "7.11.0",
+    "dayjs": "^1.8.23",
+    "firebase": "^7.12.0",
     "plotly.js": "^1.52.3",
     "prettier": "^1.19.1",
     "react": "^16.13.0",
@@ -46,6 +49,7 @@
     ]
   },
   "devDependencies": {
+    "@types/luxon": "^1.21.0",
     "@types/react-router-dom": "^5.1.3"
   }
 }
