@@ -13,7 +13,7 @@ function Weekly() {
         alignItems={"flex-start"}
       >
         <Grid item>
-          <WeeklyGraph />
+          <WeeklyChart />
         </Grid>
       </Grid>
     </div>
@@ -22,7 +22,7 @@ function Weekly() {
 
 export default Weekly;
 
-function WeeklyGraph() {
+function WeeklyChart() {
   let data = [
     {
       x: ["d", "e", "f", "g"],

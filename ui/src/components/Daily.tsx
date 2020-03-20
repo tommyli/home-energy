@@ -1,8 +1,29 @@
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import Grid from "@material-ui/core/Grid";
 import Plot from "react-plotlyjs-ts";
+import db from "../shared/firestore";
 
 function Daily() {
+  const [dayData, updateDayData] = useState({ meterConsumptions: [] });
+
+  useEffect(() => {
+    let docRef = db
+      .collection("sites")
+      .doc("6408091979")
+      .collection("dailies")
+      .doc("20141127");
+
+    docRef.onSnapshot(
+      docSnapshot => {
+        let docData: any = docSnapshot.data();
+        updateDayData({ meterConsumptions: docData.meter_consumptions });
+      },
+      err => {
+        console.log(`Encountered error: ${err}`);
+      }
+    );
+  }, []);
+
   return (
     <div>
       <Grid
@@ -13,7 +34,7 @@ function Daily() {
         alignItems={"flex-start"}
       >
         <Grid item>
-          <DailyGraph />
+          <DailyChart dayData={dayData} />
         </Grid>
       </Grid>
     </div>
@@ -22,11 +43,11 @@ function Daily() {
 
 export default Daily;
 
-function DailyGraph() {
+function DailyChart({ dayData }: { dayData: any }) {
   let data = [
     {
-      x: ["a", "b", "c"],
-      y: [1, 2, 3],
+      x: dayData.meterConsumptions.map((v: number, i: number) => i + 1),
+      y: dayData.meterConsumptions,
       type: "bar"
     }
   ];
