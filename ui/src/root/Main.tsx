@@ -1,11 +1,11 @@
-import * as React from "react";
+import React from "react";
 import Grid from "@material-ui/core/Grid";
 import HeaderBar from "./HeaderBar";
 import NavigationBar from "./NavigationBar";
 import CssBaseline from "@material-ui/core/CssBaseline";
 import Box from "@material-ui/core/Box";
-import Daily from "./Daily";
-import Weekly from "./Weekly";
+import Daily from "../daily/components/Daily";
+import Weekly from "../weekly/Weekly";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import { MuiPickersUtilsProvider } from "@material-ui/pickers";
 import DayJsUtils from "@date-io/dayjs";
