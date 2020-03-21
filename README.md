@@ -92,7 +92,7 @@ gcloud functions deploy fetch_enlighten_data --entry-point on_http_get_enlighten
 
 gcloud functions deploy fetch_lems_data --entry-point on_http_get_lems_data --runtime python37 --trigger-http --env-vars-file .secrets/.env.yaml
 
-gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime python37 --trigger-bucket $GCP_STORAGE_BUCKET_ID --env-vars-file .secrets/.env.yaml
+gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime python37 --trigger-bucket $GCP_STORAGE_BUCKET_ID --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 ```
 
 To delete functions:
