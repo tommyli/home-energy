@@ -5,6 +5,8 @@ and NEM12 calculations.
 
 from datetime import date
 from datetime import datetime
+from datetime import timezone
+from datetime import timedelta
 from pathlib import Path
 import csv
 import getopt
@@ -102,15 +104,26 @@ def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, r
         nmi = list(nmis)[0]
 
         flattened = nem12_parser.flatten_data()
-        df = pd.DataFrame(flattened)
+        df_raw = pd.DataFrame(flattened)
 
-        df_agged = df.groupby(['nmi', 'interval_date', 'interval']).agg({'nmi': ['first'], 'interval_date': ['first'], 'interval': [
-            'first'], 'consumption': ['sum'], 'generation': ['sum'], 'quality': ['first'], 'interval_length': ['first'], 'uom': ['first']})
-        df_agged.columns = ["_".join(x) for x in df_agged.columns.ravel()]
-        df_agged.rename(columns={
+        AEST_OFFSET = timezone(timedelta(hours=10))
+        df_raw['interval_date'] = [pd.Timestamp(year=x.year, month=x.month, day=x.day, tzinfo=AEST_OFFSET)
+                                   for x in df_raw['interval_date']]
+        df_raw['period_start'] = [pd.Timestamp(year=x.year, month=x.month, day=x.day, tzinfo=AEST_OFFSET) +
+                                  pd.Timedelta((y - 1) * 30, 'minutes') for x, y in zip(df_raw['interval_date'], df_raw['interval'])]
+        df_raw['period_end'] = df_raw['period_start'] + \
+            pd.Timedelta(30, 'minutes')
+
+        df_agged_to_day = df_raw.groupby(['nmi', 'interval_date', 'interval', 'period_start', 'period_end']).agg({'nmi': ['first'], 'interval_date': ['first'], 'interval': [
+            'first'], 'period_start': ['first'], 'period_end': ['first'], 'consumption': ['sum'], 'generation': ['sum'], 'quality': ['first'], 'interval_length': ['first'], 'uom': ['first']})
+        df_agged_to_day.columns = [
+            "_".join(x) for x in df_agged_to_day.columns.ravel()]
+        df_agged_to_day.rename(columns={
             'nmi_first': 'nmi',
             'interval_date_first': 'interval_date',
             'interval_first': 'interval',
+            'period_start_first': 'period_start',
+            'period_end_first': 'period_end',
             'consumption_sum': 'consumption',
             'generation_sum': 'generation',
             'quality_first': 'quality',
@@ -118,49 +131,53 @@ def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, r
             'uom_first': 'uom',
         }, inplace=True)
 
-    _merged_nem12_to_db(nmi, df_agged, root_collection_name, logger)
+    _merged_nem12_to_db(nmi, df_agged_to_day, root_collection_name, logger)
 
     for tmp_n12_file in nem12_files:
         os.remove(tmp_n12_file)
 
 
-def _merged_nem12_to_db(nmi, df_agged, root_collection_name, logger):
+def _merged_nem12_to_db(nmi, df_agged_to_day, root_collection_name, logger):
     db = init_firestore_client()
+
+    interval_length = int(df_agged_to_day['interval_length'].iloc[0])
+    uom = df_agged_to_day['uom'].iloc[0]
 
     site_doc = db.collection(root_collection_name).document(nmi)
     site_doc.set({
         'nmi': nmi,
         'name': 'Home',
-        'interval_length': 30,
-        'uom': 'KWH',
+        'interval_length': interval_length,
+        'uom': uom,
     })
 
     # There is a limit of 500 on the number of batch writes
     # Write one year of data at a time
-    first_year = df_agged['interval_date'].iloc[0].year
-    last_year = df_agged['interval_date'].iloc[-1].year
+    first_year = df_agged_to_day['interval_date'].iloc[0].year
+    last_year = df_agged_to_day['interval_date'].iloc[-1].year
 
     for year in range(first_year, last_year + 1):
-        df_year = df_agged[df_agged['interval_date'].dt.year == year]
+        df_year = df_agged_to_day[df_agged_to_day['interval_date'].dt.year == year]
         nmi_date = ('-1', date(1990, 1, 1))
         dailies = []
+        periods = []
         consumptions = []
         generations = []
 
         for row in df_year.iterrows():
             key, values = row
-            nmi, interval_date, interval = key
+            nmi, interval_date, interval, period_start, period_end = key
             curr_nmi_date = (nmi, interval_date)
-            daily_doc = site_doc.collection(
-                'dailies').document(interval_date.strftime('%Y%m%d'))
 
             if (curr_nmi_date != nmi_date):
                 nmi_date = curr_nmi_date
+                periods = []
                 consumptions = []
                 generations = []
-                dailies.append({'nmi': nmi, 'interval_date': interval_date,
+                dailies.append({'nmi': nmi, 'interval_date': interval_date, 'periods': periods,
                                 'consumptions': consumptions, 'generations': generations})
-
+            periods.append(
+                {'interval': interval, 'period_start': period_start, 'period_end': period_end})
             consumptions.append(values.consumption)
             generations.append(values.generation)
 
@@ -172,12 +189,10 @@ def _merged_nem12_to_db(nmi, df_agged, root_collection_name, logger):
                 'dailies').document(interval_date.strftime('%Y%m%d'))
             batch.set(daily_doc, {
                 'interval_date': datetime.combine(interval_date, datetime.min.time()),
+                'periods': daily.get('periods'),
                 'meter_consumptions': daily.get('consumptions'),
                 'meter_generations': daily.get('generations'),
-                'solar_generations': [],
-                'battery_charges': [],
-                'battery_discharges': [],
-            })
+            }, merge=True)
 
         batch.commit()
 
