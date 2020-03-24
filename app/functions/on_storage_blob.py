@@ -5,6 +5,7 @@ import os
 import sys
 
 from .. import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
+from .. import ENLIGHTEN_STORAGE_PATH_PREFIX
 from .. import init_gcp_logger
 from .. import init_storage_client
 
@@ -12,6 +13,7 @@ from ..common import idate_range
 from ..nem12 import handle_nem12_blob_in
 from ..nem12 import handle_nem12_blob_merged
 from ..nem12 import Nem12Merger
+from ..enlighten import handle_enlighten_blob
 
 
 def on_storage_blob(data, context):
@@ -46,6 +48,9 @@ def on_storage_blob(data, context):
     elif (blob_name.startswith(NEM12_STORAGE_PATH_MERGED)):
         handle_nem12_blob_merged(data, context, storage_client,
                                  bucket, blob_name, 'sites', gcp_logger)
+    elif(blob_name.startswith(ENLIGHTEN_STORAGE_PATH_PREFIX)):
+        handle_enlighten_blob(data, context, storage_client,
+                              bucket, blob_name, 'sites', gcp_logger)
     else:
         gcp_logger.debug(
             f"Skipping storage event event_id={context.event_id}, event_type={context.event_type}")

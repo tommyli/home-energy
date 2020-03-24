@@ -180,11 +180,19 @@ and is stored in [NEM12 format](https://www.aemo.com.au/consultations/current-an
 My solar system uses Enphase solar panels with microinverters.  They provide an [API](https://developer.enphase.com/docs) to fetch energy generation data
 from each panel.
 
-Example request:
+Example.
+
+Request total generation at 5 minute intervals starting at 1577797200 Unix Epoch time.  This time should be set to midnight local time to fetch the full day's data.
+1428328800 time is the same as 2015-04-07T00:00:00+10:00 or 2015-04-06T14:00:00Z.
+1577797200 time is the same as 2020-01-01T00:00:00+11:00 or 2019-12-31T13:00:00Z.
+1561903200 time is the same as 2019-07-01T00:00:00+10:00 or 2019-06-30T14:00:00Z.
 
 ```bash
-curl https://api.enphaseenergy.com/api/v2/systems/$ENLIGHTEN_SYSTEM_ID/stats?key=$ENLIGHTEN_API_KEY&user_id=$ENLIGHTEN_USER_ID&datetime_format=iso8601&
-start_at=1428328800
+curl https://api.enphaseenergy.com/api/v2/systems/$ENLIGHTEN_SYSTEM_ID/stats?key=$ENLIGHTEN_API_KEY&user_id=$ENLIGHTEN_USER_ID&datetime_format=iso8601&start_at=1428328800
+
+curl https://api.enphaseenergy.com/api/v2/systems/$ENLIGHTEN_SYSTEM_ID/stats?key=$ENLIGHTEN_API_KEY&user_id=$ENLIGHTEN_USER_ID&datetime_format=iso8601&start_at=1577797200
+
+curl https://api.enphaseenergy.com/api/v2/systems/$ENLIGHTEN_SYSTEM_ID/stats?key=$ENLIGHTEN_API_KEY&user_id=$ENLIGHTEN_USER_ID&datetime_format=iso8601&start_at=1561903200
 ```
 
 ### LEMS Battery Management

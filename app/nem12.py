@@ -5,8 +5,8 @@ and NEM12 calculations.
 
 from datetime import date
 from datetime import datetime
-from datetime import timezone
 from datetime import timedelta
+from datetime import timezone
 from pathlib import Path
 import csv
 import getopt
