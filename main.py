@@ -1,3 +1,5 @@
 from app.functions.on_http_get_enlighten_data import on_http_get_enlighten_data
 from app.functions.on_http_get_lems_data import on_http_get_lems_data
+from app.functions.on_http_reload_enlighten import on_http_reload_enlighten
+from app.functions.on_http_reload_nem12 import on_http_reload_nem12
 from app.functions.on_storage_blob import on_storage_blob

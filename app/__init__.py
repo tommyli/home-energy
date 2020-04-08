@@ -34,35 +34,37 @@ NEM12_STORAGE_PATH_MERGED = os.environ.get(
 GCP_STORAGE_BUCKET_ID = os.environ.get(
     'GCP_STORAGE_BUCKET_ID', 'GCP_STORAGE_BUCKET_ID not set.')
 
-storage_client = None
-firestore_client = None
-gcp_logger = None
+NMI = os.environ.get('NMI', 'NMI not set.')
+
+STORAGE_CLIENT = None
+FIRESTORE_CLIENT = None
+GCP_LOGGER = None
 
 
 def init_storage_client():
     from google.cloud import storage
 
-    global storage_client
+    global STORAGE_CLIENT
 
-    if storage_client:
-        return storage_client
+    if STORAGE_CLIENT:
+        return STORAGE_CLIENT
 
-    storage_client = storage.Client()
+    STORAGE_CLIENT = storage.Client()
 
-    return storage_client
+    return STORAGE_CLIENT
 
 
 def init_firestore_client():
     from google.cloud import firestore
 
-    global firestore_client
+    global FIRESTORE_CLIENT
 
-    if firestore_client:
-        return firestore_client
+    if FIRESTORE_CLIENT:
+        return FIRESTORE_CLIENT
 
-    firestore_client = firestore.Client()
+    FIRESTORE_CLIENT = firestore.Client()
 
-    return firestore_client
+    return FIRESTORE_CLIENT
 
 
 def init_gcp_logger():
@@ -70,15 +72,15 @@ def init_gcp_logger():
     from google.cloud.logging.handlers import CloudLoggingHandler, setup_logging
     import google.cloud.logging as gcp_logging
 
-    global gcp_logger
+    global GCP_LOGGER
 
-    if gcp_logger:
-        return gcp_logger
+    if GCP_LOGGER:
+        return GCP_LOGGER
 
     GCP_LOG_CLIENT = gcp_logging.Client()
     GCP_LOG_HANDLER = CloudLoggingHandler(GCP_LOG_CLIENT)
-    gcp_logger = logging.getLogger()
-    gcp_logger.setLevel(logging.INFO)
-    gcp_logger.addHandler(GCP_LOG_HANDLER)
+    GCP_LOGGER = logging.getLogger()
+    GCP_LOGGER.setLevel(logging.INFO)
+    GCP_LOGGER.addHandler(GCP_LOG_HANDLER)
 
-    return gcp_logger
+    return GCP_LOGGER

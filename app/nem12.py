@@ -4,21 +4,15 @@ and NEM12 calculations.
 """
 
 import csv
-import getopt
 import os
-import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
-from google.cloud import firestore
 from google.cloud.storage import Blob
-from pytz import timezone as pytz_timezone
 
-from . import (NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED,
-               init_firestore_client, init_gcp_logger)
-from .common import AEST_OFFSET, LOCAL_TZ, merge_df_to_db
+from . import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
+from .common import merge_df_to_db
 
 
 def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logger):
@@ -27,7 +21,7 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
     together and places in NEM12_STORAGE_PATH_MERGED path, one NMI per file.
     """
 
-    logger.info(f"handle_nem12_blob_in()")
+    logger.info(f"handle_nem12_blob_in(blob_name={blob_name})")
     nem12_blobs = [blob for blob in (storage_client.list_blobs(
         bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_IN)) if (blob.name.endswith('.csv'))]
 
@@ -82,7 +76,7 @@ def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, r
     This function only handles one NMI per NEM12 file, pre-processed by handle_nem12_blob_in()
     """
 
-    logger.info(f"handle_nem12_blob_merged()")
+    logger.info(f"handle_nem12_blob_merged(blob_name={blob_name})")
 
     Path(
         f"/tmp/{NEM12_STORAGE_PATH_MERGED}").mkdir(parents=True, exist_ok=True)
