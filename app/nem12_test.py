@@ -44,7 +44,7 @@ def test_handle_nem12_blob_merged():
     # then
     dailies = [d for d in db.collection('test_sites').document(
         '6408091979').collection('dailies').stream()]
-    assert len(dailies) == 83
+    assert len(dailies) == 108
 
 
 def test_flatten_data():
