@@ -1,15 +1,14 @@
-from os import listdir
-from os.path import isfile, join
-from app.nem12 import Nem12Merger
-import pandas as pd
+import logging
 import pickle
 import time
-import logging
+from os import listdir
+from os.path import isfile, join
 
-from . import GCP_STORAGE_BUCKET_ID
-from . import init_firestore_client
-from . import init_storage_client
-from app.nem12 import handle_nem12_blob_merged
+import pandas as pd
+
+from app.nem12 import Nem12Merger, handle_nem12_blob_merged
+
+from . import GCP_STORAGE_BUCKET_ID, init_firestore_client, init_storage_client
 
 nem12_in_path = 'fixtures/nem12/in'
 nem12_merged_path = 'fixtures/nem12/merged'

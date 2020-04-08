@@ -1,9 +1,10 @@
 import base64
 import os
 import sys
-from . import LEMS_URL
 
 import requests
+
+from . import LEMS_URL
 
 
 def get_lems_data_resp(user_id, password, batter_id, as_of_date):

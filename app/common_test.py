@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, date
+from datetime import date, datetime, timedelta
 from unittest.mock import Mock
 
 from app.common import idate_range
