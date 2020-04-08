@@ -1,15 +1,14 @@
-from datetime import datetime, timedelta, date
-from pathlib import Path
 import csv
 import os
 import sys
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
-from .. import ENLIGHTEN_API_KEY, ENLIGHTEN_USER_ID, ENLIGHTEN_SYSTEM_ID, ENLIGHTEN_DATA_MIN_DATE, ENLIGHTEN_STORAGE_PATH_PREFIX, GCP_STORAGE_BUCKET_ID
-from .. import init_gcp_logger
-from .. import init_storage_client
-
-from ..common import idate_range
-from ..common import get_already_fetched
+from .. import (ENLIGHTEN_API_KEY, ENLIGHTEN_DATA_MIN_DATE,
+                ENLIGHTEN_STORAGE_PATH_PREFIX, ENLIGHTEN_SYSTEM_ID,
+                ENLIGHTEN_USER_ID, GCP_STORAGE_BUCKET_ID, init_gcp_logger,
+                init_storage_client)
+from ..common import get_already_fetched, idate_range
 from ..enlighten import get_enlighten_stats_resp
 
 

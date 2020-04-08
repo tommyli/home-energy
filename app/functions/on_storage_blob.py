@@ -1,19 +1,15 @@
-from datetime import datetime, timedelta, date
-from pathlib import Path
 import csv
 import os
 import sys
+from datetime import date, datetime, timedelta
+from pathlib import Path
 
-from .. import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
-from .. import ENLIGHTEN_STORAGE_PATH_PREFIX
-from .. import init_gcp_logger
-from .. import init_storage_client
-
+from .. import (ENLIGHTEN_STORAGE_PATH_PREFIX, NEM12_STORAGE_PATH_IN,
+                NEM12_STORAGE_PATH_MERGED, init_gcp_logger,
+                init_storage_client)
 from ..common import idate_range
-from ..nem12 import handle_nem12_blob_in
-from ..nem12 import handle_nem12_blob_merged
-from ..nem12 import Nem12Merger
 from ..enlighten import handle_enlighten_blob
+from ..nem12 import Nem12Merger, handle_nem12_blob_in, handle_nem12_blob_merged
 
 
 def on_storage_blob(data, context):
