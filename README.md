@@ -9,6 +9,7 @@ Unless one has the exact same home energy setup, this project will not be releva
 ### Prerequisites
 
 #### Google Cloud Platform
+
 This project uses the following Google Cloud Platform features:
 
 * [Cloud Functions](https://cloud.google.com/functions/docs) - [Python Runtime](https://cloud.google.com/functions/docs/concepts/python-runtime)
@@ -95,6 +96,12 @@ curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value projec
 curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/reload_enlighten?year=2020" -H "Authorization: bearer $(gcloud auth print-identity-token)"
 ```
 
+### Fetch daily data from Firestore, merge to Pickle file and upload to storage bucket - on_http_fetch_dailies(request)
+
+```bash
+curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_dailies" -H "Authorization: bearer $(gcloud auth print-identity-token)"
+```
+
 ## Deployment
 
 To deploy functions:
@@ -109,6 +116,8 @@ gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime 
 gcloud functions deploy reload_nem12 --entry-point on_http_reload_nem12 --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 
 gcloud functions deploy reload_enlighten --entry-point on_http_reload_enlighten --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
+
+gcloud functions deploy fetch_dailies --entry-point on_http_fetch_dailies --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
 ```
 
 To delete functions:
@@ -123,6 +132,8 @@ gcloud functions delete on_storage_blob
 gcloud functions delete reload_nem12
 
 gcloud functions delete reload_enlighten
+
+gcloud functions delete fetch_dailies
 ```
 
 To schedule jobs and run functions:
@@ -176,7 +187,7 @@ functions-framework --source main.py --target on_storage_blob --signature-type e
 View latest gcloud functions log
 
 ```bash
-gcloud functions logs read
+gcloud functions logs read --region asia-northeast1
 ```
 
 View bucket files
@@ -224,6 +235,7 @@ curl https://api.enphaseenergy.com/api/v2/systems/$ENLIGHTEN_SYSTEM_ID/stats?key
 [Residential Storage Battery System](https://www.panasonic.com/au/support/product-archives/energy-solutions/residential-storage-battery-system/lj-sk84a.html)
 
 Example request:
+
 ```bash
 curl -X GET -u $LEMS_USER:$LEMS_PASSWORD https://lems.panabattery.com/api/Battery/$LEMS_BATTERY_ID/soc/data?MinDate=2020-01-01&Hours=24
 ```
