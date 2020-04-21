@@ -1,6 +1,6 @@
 import itertools
 import sys
-from datetime import date, datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from operator import itemgetter
 
 import pandas as pd
@@ -17,8 +17,8 @@ def idate_range(start_date, end_date):
                           for n in range(sys.maxsize))
     min_to_max = itertools.takewhile(
         lambda d: d <= end_date, all_dates_from_min)
-    for d in min_to_max:
-        yield d
+    for date in min_to_max:
+        yield date
 
 
 def get_already_fetched(storage_client, bucket, prefix, already_fetched_size_threshold_bytes):
@@ -29,27 +29,29 @@ def get_already_fetched(storage_client, bucket, prefix, already_fetched_size_thr
     grouped_by_size_more_than_threshold = itertools.groupby(
         sorted_by_size, lambda b: b.get('size') > already_fetched_size_threshold_bytes)
     already_fetched_group = next(
-        (i for i in grouped_by_size_more_than_threshold if (i[0])), (True, iter([])))
+        (i for i in grouped_by_size_more_than_threshold if i[0]), (True, iter([])))
     already_fetched = already_fetched_group[1]
 
     return list(already_fetched)
 
 
-def merge_df_to_db(nmi, df, root_collection_name, logger):
+def merge_df_to_db(nmi, dfm, root_collection_name, logger):
     """
     df must have index ['interval_date']
     interval_length must be 30 mins so there should be 48 array values for each day
     all values must be normalised to kWh
     """
 
-    assert 'interval_date' in df.index.names, f"Provided data frame must contain index name 'interval_date' but got {df.index.names}"
+    assert 'interval_date' in dfm.index.names, f"Provided data frame must contain index name 'interval_date' but got {dfm.index.names}"
 
-    db = init_firestore_client()
+    logger.info('merge_df_to_db(%s)', nmi)
+
+    fdb = init_firestore_client()
 
     interval_length = 30
     uom = 'KWH'
 
-    site_doc = db.collection(root_collection_name).document(nmi)
+    site_doc = fdb.collection(root_collection_name).document(nmi)
     site_doc.set({
         'nmi': nmi,
         'name': 'Home',
@@ -59,16 +61,16 @@ def merge_df_to_db(nmi, df, root_collection_name, logger):
 
     # There is a limit of 500 on the number of batch writes
     # Write one year of data at a time
-    first_year = df.index.get_level_values(
+    first_year = dfm.index.get_level_values(
         'interval_date')[0].year
-    last_year = df.index.get_level_values(
+    last_year = dfm.index.get_level_values(
         'interval_date')[-1].year
 
     for year in range(first_year, last_year + 1):
-        df_year = df[str(year)]
+        df_year = dfm[str(year)]
         date_key_dict = df_year.to_dict('index')
 
-        batch = db.batch()
+        batch = fdb.batch()
 
         for interval_date in date_key_dict:
             doc_data = {'interval_date': interval_date,

@@ -3,6 +3,9 @@ from ..nem12 import handle_nem12_blob_merged
 
 
 def on_http_reload_nem12(request):
+    gcp_logger = init_gcp_logger()
+    gcp_logger.info('on_http_reload_nem12(), args=%s', request.args)
+
     storage_client = init_storage_client()
     blob_name = f"nem12/merged/nem12_{NMI}.csv"
     bucket = storage_client.get_bucket(GCP_STORAGE_BUCKET_ID)

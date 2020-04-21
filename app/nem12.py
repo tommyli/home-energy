@@ -23,7 +23,7 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
 
     logger.info(f"handle_nem12_blob_in(blob_name={blob_name})")
     nem12_blobs = [blob for blob in (storage_client.list_blobs(
-        bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_IN)) if (blob.name.endswith('.csv'))]
+        bucket_or_name=bucket, prefix=NEM12_STORAGE_PATH_IN)) if blob.name.endswith('.csv')]
 
     Path(
         f"/tmp/{NEM12_STORAGE_PATH_IN}").mkdir(parents=True, exist_ok=True)
@@ -42,7 +42,7 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
     merger = Nem12Merger(nem12_files)
     nmi_meter_registers = merger.nmi_meter_registers
 
-    if (len(nmi_meter_registers) > 0):
+    if len(nmi_meter_registers) > 0:
         nmis = set([nmr.nmi for nmr in nmi_meter_registers])
 
         for nmi in nmis:
@@ -56,8 +56,8 @@ def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logge
                     csv_writer.writerow(nmr.line_items)
                     for iday in nmr.interval_days:
                         csv_writer.writerow(iday.line_items)
-                        for vq in iday.variable_qualities:
-                            csv_writer.writerow(vq.line_items)
+                        for var_q in iday.variable_qualities:
+                            csv_writer.writerow(var_q.line_items)
 
             new_blob_name = f"{NEM12_STORAGE_PATH_MERGED}/nem12_{nmi}.csv"
             logger.info(f"Writing to new_blob_name={new_blob_name}")
@@ -91,7 +91,7 @@ def handle_nem12_blob_merged(data, context, storage_client, bucket, blob_name, r
     nem12_parser = Nem12Merger(nem12_files)
     nmi_meter_registers = nem12_parser.nmi_meter_registers
 
-    if (len(nmi_meter_registers) > 0):
+    if len(nmi_meter_registers) > 0:
         nmis = set([nmr.nmi for nmr in nmi_meter_registers])
         assert len(nmis) == 1, f"Expected only one NMI but found [{nmis}]"
 
@@ -139,11 +139,11 @@ class Nem12Merger():
         self._parse()
 
     def _parse(self):
-        for f in self.nem12_files:
-            with open(f) as csv_file:
+        for nem12_file in self.nem12_files:
+            with open(nem12_file) as csv_file:
                 csv_reader = csv.reader(csv_file, delimiter=',')
                 for row in csv_reader:
-                    if (row[0] == '200'):
+                    if row[0] == '200':
                         nmi = row[1]
                         register = row[3]
                         meter = row[6]
@@ -153,13 +153,13 @@ class Nem12Merger():
                         row_nmr = NmiMeterRegister(
                             nmi, meter, register, register_config, uom, interval_length, row)
                         existing_nmr = next(
-                            (nmr for nmr in self.nmi_meter_registers if (nmr == row_nmr)), None)
-                        if (existing_nmr == None):
+                            (nmr for nmr in self.nmi_meter_registers if nmr == row_nmr), None)
+                        if existing_nmr is None:
                             existing_nmr = row_nmr
                             self.nmi_meter_registers.append(existing_nmr)
                         self.current_nmr = existing_nmr
 
-                    elif (row[0] == '300'):
+                    elif row[0] == '300':
                         interval_count = 1440 / self.current_nmr.interval_length
                         interval_date = datetime.strptime(
                             row[1], '%Y%m%d')
@@ -167,8 +167,8 @@ class Nem12Merger():
                         row_iday = IntervalDay(
                             self.current_nmr, interval_date, quality, row)
                         existing_iday = next(
-                            (iday for iday in self.current_nmr.interval_days if (iday == row_iday)), None)
-                        if (existing_iday == None):
+                            (iday for iday in self.current_nmr.interval_days if iday == row_iday), None)
+                        if existing_iday is None:
                             existing_iday = row_iday
                             existing_iday.interval_values = [
                                 float(iv) for iv in row[2:int(interval_count + 2)]]
@@ -176,12 +176,12 @@ class Nem12Merger():
                                 existing_iday)
                         self.current_iday = existing_iday
 
-                    elif (row[0] == '400'):
+                    elif row[0] == '400':
                         row_var_quality = VariableDayQuality(
                             self.current_iday, "".join(row), row)
                         existing_var_quality = next(
-                            (vq for vq in self.current_iday.variable_qualities if (vq == row_var_quality)), None)
-                        if (existing_var_quality == None):
+                            (vq for vq in self.current_iday.variable_qualities if vq == row_var_quality), None)
+                        if existing_var_quality is None:
                             existing_var_quality = row_var_quality
                             self.current_iday.variable_qualities.append(
                                 existing_var_quality)
@@ -209,7 +209,6 @@ class Nem12Merger():
             assert interval_length == 30, f"Current implementation only supports interval length of 30 minutes but got interval_length={interval_length}"
 
             for iday in nmr.interval_days:
-                quality = iday.quality
 
                 for i, value in enumerate(iday.interval_values):
 

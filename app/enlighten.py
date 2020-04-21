@@ -1,22 +1,13 @@
-import csv
-import getopt
 import json
-import os
 import re
-import sys
-from datetime import date, datetime, timedelta, timezone
-from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
 import requests
-from google.cloud import firestore
 from google.cloud.storage import Blob
-from numpy import datetime64, timedelta64
-from pytz import timezone as pytz_timezone
 
-from . import (ENLIGHTEN_STORAGE_PATH_PREFIX, ENLIGHTEN_URL, NMI,
-               init_firestore_client)
+from . import ENLIGHTEN_URL, NMI
 from .common import AEST_OFFSET, LOCAL_TZ, merge_df_to_db
 
 
@@ -37,11 +28,11 @@ def handle_enlighten_blob(data, context, storage_client, bucket, blob_name, root
     groups into half hour intervals and loads into Firestore.  Each blob represents data for one day.
     """
 
-    logger.info(f"handle_enlighten_blob(blob_name={blob_name})")
+    logger.info('handle_enlighten_blob(blob_name=%s)', blob_name)
 
     match = re.search(r'enlighten_stats_(\d\d\d\d\d\d\d\d).json',
                       blob_name)
-    if (match == None):
+    if match is None:
         logger.warn(f"Unexpected blob_name={blob_name}")
         return None
 
@@ -49,7 +40,6 @@ def handle_enlighten_blob(data, context, storage_client, bucket, blob_name, root
     raw_data = json.loads(blob.download_as_string())
 
     interval_date = datetime.strptime(match[1], '%Y%m%d')
-    system_id = raw_data.get('system_id')
 
     df_day = create_normalised_enlighten_stats_df(
         interval_date, raw_data.get('intervals'))
@@ -57,10 +47,12 @@ def handle_enlighten_blob(data, context, storage_client, bucket, blob_name, root
     merge_df_to_db(NMI, df_day, root_collection_name, logger)
 
 
-def rounded_mean(x): return round(np.mean(x / 1000), 3)
+def rounded_mean(num):
+    return round(np.mean(num / 1000), 3)
 
 
-def sum_to_kwh(x): return np.sum(x / 1000)
+def sum_to_kwh(num):
+    return np.sum(num / 1000)
 
 
 def create_normalised_enlighten_stats_df(interval_date, enlighten_intervals):

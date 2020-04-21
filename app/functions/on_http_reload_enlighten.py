@@ -5,14 +5,17 @@ from datetime import datetime
 import pandas as pd
 from google.cloud.storage import Blob
 
-from .. import GCP_STORAGE_BUCKET_ID, NMI, init_gcp_logger, init_storage_client
+from .. import (ENLIGHTEN_STORAGE_PATH_PREFIX, GCP_STORAGE_BUCKET_ID, NMI,
+                init_gcp_logger, init_storage_client)
 from ..common import get_already_fetched, merge_df_to_db
-from ..enlighten import (ENLIGHTEN_STORAGE_PATH_PREFIX,
-                         create_normalised_enlighten_stats_df)
+from ..enlighten import create_normalised_enlighten_stats_df
 
 
 def on_http_reload_enlighten(request):
+    gcp_logger = init_gcp_logger()
     request_args = request.args
+    gcp_logger.info('on_http_reload_enlighten(), args=%s', request_args)
+
     year = request_args['year'] if request_args and 'year' in request_args else datetime.now(
     ).year
     storage_client = init_storage_client()

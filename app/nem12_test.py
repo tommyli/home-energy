@@ -1,6 +1,4 @@
 import logging
-import pickle
-import time
 from os import listdir
 from os.path import isfile, join
 
@@ -10,17 +8,17 @@ from app.nem12 import Nem12Merger, handle_nem12_blob_merged
 
 from . import GCP_STORAGE_BUCKET_ID, init_firestore_client, init_storage_client
 
-nem12_in_path = 'fixtures/nem12/in'
-nem12_merged_path = 'fixtures/nem12/merged'
-nem12_in_files = [join(nem12_in_path, f) for f in listdir(
-    nem12_in_path) if isfile(join(nem12_in_path, f))]
-nem12_merged_files = [join(nem12_merged_path, f) for f in listdir(
-    nem12_merged_path) if isfile(join(nem12_merged_path, f))]
+NEM12_IN_PATH = 'fixtures/nem12/in'
+NEM12_MERGED_PATH = 'fixtures/nem12/merged'
+NEM12_IN_FILES = [join(NEM12_IN_PATH, f) for f in listdir(
+    NEM12_IN_PATH) if isfile(join(NEM12_IN_PATH, f))]
+NEM12_MERGED_FILES = [join(NEM12_MERGED_PATH, f) for f in listdir(
+    NEM12_MERGED_PATH) if isfile(join(NEM12_MERGED_PATH, f))]
 
 
 def test_nem12_parsing():
     # when
-    merger = Nem12Merger(nem12_in_files)
+    merger = Nem12Merger(NEM12_IN_FILES)
     nmi_meter_registers = merger.nmi_meter_registers
 
     # then
@@ -31,7 +29,7 @@ def test_nem12_parsing():
 def test_handle_nem12_blob_merged():
     # given
     storage_client = init_storage_client()
-    db = init_firestore_client()
+    fdb = init_firestore_client()
     blob_name = 'nem12/merged/nem12_6408091979_small.csv'
     bucket = storage_client.get_bucket(GCP_STORAGE_BUCKET_ID)
     logger = logging.getLogger()
@@ -41,7 +39,7 @@ def test_handle_nem12_blob_merged():
                              bucket, blob_name, 'test_sites', logger)
 
     # then
-    dailies = [d for d in db.collection('test_sites').document(
+    dailies = [d for d in fdb.collection('test_sites').document(
         '6408091979').collection('dailies').stream()]
     assert len(dailies) == 108
 
@@ -51,8 +49,8 @@ def test_flatten_data():
     nem12_files = ['fixtures/nem12/merged/nem12_6408091979_small.csv']
     merger = Nem12Merger(nem12_files)
     flattened = merger.flatten_data()
-    df = pd.DataFrame(flattened)
-    df.to_pickle('fixtures/nem12/test_flatten_data.pkl')
+    dfm = pd.DataFrame(flattened)
+    dfm.to_pickle('fixtures/nem12/test_flatten_data.pkl')
 
     df_result = pd.read_pickle('fixtures/nem12/test_flatten_data.pkl')
-    assert len(df_result.index) == len(df.index)
+    assert len(df_result.index) == len(dfm.index)
