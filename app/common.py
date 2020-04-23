@@ -37,9 +37,9 @@ def get_already_fetched(storage_client, bucket, prefix, already_fetched_size_thr
 
 def merge_df_to_db(nmi, dfm, root_collection_name, logger):
     """
-    df must have index ['interval_date']
+    dfm must have DatetimeIndex['interval_date'], dtype='datetime64[ns]'
     interval_length must be 30 mins so there should be 48 array values for each day
-    all values must be normalised to kWh
+    all values must be normalised to kW or kWh
     """
 
     assert 'interval_date' in dfm.index.names, f"Provided data frame must contain index name 'interval_date' but got {dfm.index.names}"

@@ -33,7 +33,7 @@ def handle_enlighten_blob(data, context, storage_client, bucket, blob_name, root
     match = re.search(r'enlighten_stats_(\d\d\d\d\d\d\d\d).json',
                       blob_name)
     if match is None:
-        logger.warn(f"Unexpected blob_name={blob_name}")
+        logger.warn('Unexpected blob_name=%s', blob_name)
         return None
 
     blob = Blob(blob_name, bucket)

@@ -96,6 +96,12 @@ curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value projec
 curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/reload_enlighten?year=2020" -H "Authorization: bearer $(gcloud auth print-identity-token)"
 ```
 
+### Reload LEMS data into Firestore - on_http_reload_lems(request)
+
+```bash
+curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/reload_lems?year=2020" -H "Authorization: bearer $(gcloud auth print-identity-token)"
+```
+
 ### Fetch daily data from Firestore, merge to Pickle file and upload to storage bucket - on_http_fetch_dailies(request)
 
 ```bash
@@ -116,6 +122,8 @@ gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime 
 gcloud functions deploy reload_nem12 --entry-point on_http_reload_nem12 --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 
 gcloud functions deploy reload_enlighten --entry-point on_http_reload_enlighten --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
+
+gcloud functions deploy reload_lems --entry-point on_http_reload_lems --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 
 gcloud functions deploy fetch_dailies --entry-point on_http_fetch_dailies --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
 ```

@@ -27,12 +27,14 @@ def test_nem12_parsing():
 
 
 def test_handle_nem12_blob_merged():
-    # given
+    # setup
     storage_client = init_storage_client()
     fdb = init_firestore_client()
+    logger = logging.getLogger()
+
+    # given
     blob_name = 'nem12/merged/nem12_6408091979_small.csv'
     bucket = storage_client.get_bucket(GCP_STORAGE_BUCKET_ID)
-    logger = logging.getLogger()
 
     # when
     handle_nem12_blob_merged(None, None, storage_client,
@@ -52,5 +54,6 @@ def test_flatten_data():
     dfm = pd.DataFrame(flattened)
     dfm.to_pickle('fixtures/nem12/test_flatten_data.pkl')
 
+    # then
     df_result = pd.read_pickle('fixtures/nem12/test_flatten_data.pkl')
     assert len(df_result.index) == len(dfm.index)

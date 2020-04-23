@@ -1,7 +1,8 @@
-from .. import (ENLIGHTEN_STORAGE_PATH_PREFIX, NEM12_STORAGE_PATH_IN,
-                NEM12_STORAGE_PATH_MERGED, init_gcp_logger,
-                init_storage_client)
+from .. import (ENLIGHTEN_STORAGE_PATH_PREFIX, LEMS_STORAGE_PATH_PREFIX,
+                NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED,
+                init_gcp_logger, init_storage_client)
 from ..enlighten import handle_enlighten_blob
+from ..lems import handle_lems_blob
 from ..nem12 import handle_nem12_blob_in, handle_nem12_blob_merged
 
 
@@ -39,6 +40,9 @@ def on_storage_blob(data, context):
     elif blob_name.startswith(ENLIGHTEN_STORAGE_PATH_PREFIX):
         handle_enlighten_blob(data, context, storage_client,
                               bucket, blob_name, 'sites', gcp_logger)
+    elif blob_name.startswith(LEMS_STORAGE_PATH_PREFIX):
+        handle_lems_blob(data, context, storage_client,
+                         bucket, blob_name, 'sites', gcp_logger)
     else:
         gcp_logger.debug(
             'Skipping storage event event_id=%s, event_type=%s', context.event_id, context.event_type)
