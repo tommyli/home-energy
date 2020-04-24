@@ -15,7 +15,11 @@ def on_http_fetch_dailies(request):
     fdb = init_firestore_client()
 
     columns = ['meter_consumptions_kwh', 'meter_generations_kwh',
-               'solar_generations_kwh', 'solar_mean_powrs_kw']
+               'solar_generations_kwh', 'solar_mean_powrs_kw', 'solar_devices_reportings',
+               'capacities_kw', 'charge_quantities_kwh', 'deterioration_states_pct',
+               'discharge_quantities_kwh', 'power_at_charges_kw', 'residual_capacities_pct',
+               'total_charge_quantities_kwh', 'total_discharge_quantities_kwh'
+               ]
 
     df_all_dailies = pd.DataFrame(
         index=pd.DatetimeIndex([]), columns=columns)

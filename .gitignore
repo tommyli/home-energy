@@ -3,6 +3,7 @@
 .secrets
 .snippets
 data
+notebooks/sandbox.ipynb
 
 # End of Custom
 
