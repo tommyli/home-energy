@@ -21,11 +21,15 @@ Getting Started on Google Cloud Platform is not easy as the ecosystem is huge wi
 
 All Google Cloud Platform features in this project share the same [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating_a_service_account) and this is not recommended, see [Enforce least privilege with recommendations](https://cloud.google.com/iam/docs/recommender-overview)
 
-#### Python Development Environment
+Pick one method of managing your Python development environment below, **DO NOT** mix both together.
+
+#### Using Pip + Virtual Environments
 
 Refer to [Python Getting Started](https://www.python.org/about/gettingstarted/) and [Python Virtual Environments](https://www.python.org/dev/peps/pep-0405/).
 
 Below commands will setup and install all dependencies of this project into its own virtual environment.
+
+For running tests and deployed Google Cloud Functions (GCP also requires `requirements.txt`) to work then `requirements.txt` is all you need.
 
 ```bash
 cd $PROJECT_DIR
@@ -37,7 +41,17 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-#### UI - React
+#### Using Conda or Miniconda
+
+To run Jupyter notebooks as well, use `environment.yml`.  I recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html), more lightweight.  More info on how to use Conda to [Manage Environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+
+```bash
+cd $PROJECT_DIR
+
+conda env create -f environment.yml
+```
+
+#### UI - ReactJS
 
 UI is done in ReactJS, refer to ui [README.md](ui/README.md).
 
