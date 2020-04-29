@@ -1,5 +1,6 @@
 # Custom
 .gcloudignore
+.ipynb_checkpoints
 .secrets
 .snippets
 data
