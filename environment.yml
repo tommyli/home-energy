@@ -152,4 +152,3 @@ dependencies:
       - pyqt5-sip==4.19.18
       - pyqtwebengine==5.12.1
       - google-cloud-firestore==1.6.2
-prefix: /Users/tommyli/miniconda3/envs/home-energy
