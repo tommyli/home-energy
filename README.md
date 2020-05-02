@@ -21,6 +21,12 @@ Getting Started on Google Cloud Platform is not easy as the ecosystem is huge wi
 
 All Google Cloud Platform features in this project share the same [service account](https://cloud.google.com/iam/docs/creating-managing-service-accounts#creating_a_service_account) and this is not recommended, see [Enforce least privilege with recommendations](https://cloud.google.com/iam/docs/recommender-overview)
 
+[Google Cloud SDK](https://cloud.google.com/sdk/docs) is required to run the commands below using
+[gcloud](https://cloud.google.com/sdk/gcloud/reference) or
+[gsutil](https://cloud.google.com/storage/docs/gsutil).
+
+#### Python Environment
+
 Pick one method of managing your Python development environment below, **DO NOT** mix both together.
 
 #### Using Pip + Virtual Environments
@@ -43,7 +49,7 @@ pip install -r requirements.txt
 
 #### Using Conda or Miniconda
 
-To run Jupyter notebooks as well, use `environment.yml`.  I recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html), more lightweight.  More info on how to use Conda to [Manage Environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).
+To run Jupyter notebooks as well, use `environment.yml`.  I recommend using [Miniconda](https://docs.conda.io/en/latest/miniconda.html) as it is more lightweight.  More info on how to use Conda to [Manage Environments](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html).  Also see [Anaconda vs. Miniconda vs. Virtualenv](http://deeplearning.lipingyang.org/2018/12/23/anaconda-vs-miniconda-vs-virtualenv/) blog post for discussion on comparing different Python Environment options.
 
 ```bash
 cd $PROJECT_DIR
@@ -222,6 +228,22 @@ gsutil ls "gs://data-$(gcloud config get-value project)/nem12/merged"
 gsutil ls "gs://data-$(gcloud config get-value project)/enlighten"
 
 gsutil ls "gs://data-$(gcloud config get-value project)/lems"
+```
+
+## Firebase
+
+Even though Cloud Firestore DB is now an offering on Google Cloud Platform, at the time of writing, it seems Google has
+not yet fully migrated all management functionality to [gcloud CLI](https://cloud.google.com/sdk/gcloud/).
+  To deploy rules, Firebase CLI is still required.
+
+To install Firebase CLI, see [here](https://firebase.google.com/docs/cli).
+
+To deploy firebase rules
+
+```bash
+cd $PROJECT_DIR/firebase
+
+firebase deploy --only firestore:rules
 ```
 
 ## Related Docs
