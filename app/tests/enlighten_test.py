@@ -4,11 +4,10 @@ from datetime import datetime
 
 import pandas as pd
 
+from app import (ENLIGHTEN_API_KEY, ENLIGHTEN_SYSTEM_ID, ENLIGHTEN_USER_ID,
+                 GCP_STORAGE_BUCKET_ID, init_firestore_client,
+                 init_storage_client)
 from app.enlighten import get_enlighten_stats_resp, handle_enlighten_blob
-
-from .. import (ENLIGHTEN_API_KEY, ENLIGHTEN_SYSTEM_ID, ENLIGHTEN_USER_ID,
-                GCP_STORAGE_BUCKET_ID, init_firestore_client,
-                init_storage_client)
 
 
 def test_get_enlighten_stats_resp():

@@ -6,7 +6,7 @@ from operator import itemgetter
 import pandas as pd
 from pytz import timezone as pytz_timezone
 
-from . import init_firestore_client
+from app import init_firestore_client
 
 LOCAL_TZ = pytz_timezone('Australia/Melbourne')
 AEST_OFFSET = timezone(pd.Timedelta('10 hours'))

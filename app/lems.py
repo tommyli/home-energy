@@ -7,8 +7,8 @@ import pandas as pd
 import requests
 from google.cloud.storage import Blob
 
-from . import LEMS_STORAGE_PATH_PREFIX, LEMS_URL, NMI
-from .common import AEST_OFFSET, merge_df_to_db
+from app import LEMS_STORAGE_PATH_PREFIX, LEMS_URL, NMI
+from app.common import AEST_OFFSET, merge_df_to_db
 
 
 def get_lems_data_resp(user_id, password, batter_id, as_of_date):

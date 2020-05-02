@@ -7,8 +7,8 @@ import pandas as pd
 import requests
 from google.cloud.storage import Blob
 
-from . import ENLIGHTEN_URL, NMI
-from .common import AEST_OFFSET, LOCAL_TZ, merge_df_to_db
+from app import ENLIGHTEN_URL, NMI
+from app.common import AEST_OFFSET, LOCAL_TZ, merge_df_to_db
 
 
 def get_enlighten_stats_resp(api_key, user_id, system_id, as_of_date):

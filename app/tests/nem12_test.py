@@ -4,10 +4,9 @@ from os.path import isfile, join
 
 import pandas as pd
 
+from app import (GCP_STORAGE_BUCKET_ID, init_firestore_client,
+                 init_storage_client)
 from app.nem12 import Nem12Merger, handle_nem12_blob_merged
-
-from .. import (GCP_STORAGE_BUCKET_ID, init_firestore_client,
-                init_storage_client)
 
 NEM12_IN_PATH = 'fixtures/nem12/in'
 NEM12_MERGED_PATH = 'fixtures/nem12/merged'

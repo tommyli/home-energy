@@ -3,10 +3,9 @@ from datetime import datetime
 
 import pandas as pd
 
+from app import (GCP_STORAGE_BUCKET_ID, LEMS_BATTERY_ID, LEMS_PASSWORD,
+                 LEMS_USER, init_firestore_client, init_storage_client)
 from app.lems import get_lems_data_resp, handle_lems_blob
-
-from .. import (GCP_STORAGE_BUCKET_ID, LEMS_BATTERY_ID, LEMS_PASSWORD,
-                LEMS_USER, init_firestore_client, init_storage_client)
 
 
 def test_get_lems_data_resp():

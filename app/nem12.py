@@ -11,8 +11,8 @@ from pathlib import Path
 import pandas as pd
 from google.cloud.storage import Blob
 
-from . import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
-from .common import merge_df_to_db
+from app import NEM12_STORAGE_PATH_IN, NEM12_STORAGE_PATH_MERGED
+from app.common import merge_df_to_db
 
 
 def handle_nem12_blob_in(data, context, storage_client, bucket, blob_name, logger):
