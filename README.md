@@ -104,6 +104,15 @@ Fetch battery data, scheduled to run daily and can also be manually triggered us
 curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_lems_data" -H "Authorization: bearer $(gcloud auth print-identity-token)"
 ```
 
+### fetch_daily_temperatures - on_http_fetch_daily_temperatures(request)
+
+Fetch daily min and max temperatures from [BOM Weather Observations](https://reg.bom.gov.au/vic/observations/melbourne.shtml) for the past
+few days.
+
+```bash
+curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_daily_temperatures" -H "Authorization: bearer $(gcloud auth print-identity-token)"
+```
+
 ### Reload NEM12 data into Firestore - on_http_reload_nem12(request)
 
 ```bash
@@ -139,6 +148,8 @@ gcloud functions deploy fetch_lems_data --entry-point on_http_get_lems_data --ru
 
 gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime python37 --region asia-northeast1 --trigger-bucket $GCP_STORAGE_BUCKET_ID --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 
+gcloud functions deploy fetch_daily_temperatures --entry-point on_http_fetch_daily_temperatures --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml
+
 gcloud functions deploy reload_nem12 --entry-point on_http_reload_nem12 --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
 
 gcloud functions deploy reload_enlighten --entry-point on_http_reload_enlighten --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
@@ -170,6 +181,8 @@ To schedule jobs and run functions:
 gcloud scheduler jobs create http fetch_enlighten_data_job --schedule="0 2 * * *" --uri="https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_enlighten_data" --message-body="" --oidc-service-account-email=OIDC_SERVICE_ACCOUNT_EMAIL
 
 gcloud scheduler jobs create http fetch_lems_data_job --schedule="0 2 * * *" --uri="https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_lems_data" --message-body="" --oidc-service-account-email=OIDC_SERVICE_ACCOUNT_EMAIL
+
+gcloud scheduler jobs create http fetch_daily_temperatures --schedule="0 2 * * *" --uri="https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_daily_temperatures" --message-body="" --oidc-service-account-email=OIDC_SERVICE_ACCOUNT_EMAIL
 ```
 
 To update scheduled jobs:

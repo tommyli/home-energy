@@ -1,4 +1,5 @@
 from app.functions.on_http_fetch_dailies import on_http_fetch_dailies
+from app.functions.on_http_fetch_weather import on_http_fetch_daily_temperatures
 from app.functions.on_http_get_enlighten_data import on_http_get_enlighten_data
 from app.functions.on_http_get_lems_data import on_http_get_lems_data
 from app.functions.on_http_reload_enlighten import on_http_reload_enlighten

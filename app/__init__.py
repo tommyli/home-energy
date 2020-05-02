@@ -36,6 +36,9 @@ GCP_STORAGE_BUCKET_ID = os.environ.get(
 
 NMI = os.environ.get('NMI', 'NMI not set.')
 
+VIEWBANK_WEATHER_URL = 'https://reg.bom.gov.au/fwo/IDV60901/IDV60901.95874.json'
+SCORESBY_WEATHER_URL = 'https://reg.bom.gov.au/fwo/IDV60901/IDV60901.95867.json'
+
 STORAGE_CLIENT = None
 FIRESTORE_CLIENT = None
 GCP_LOGGER = None
