@@ -296,29 +296,33 @@ df_daily_usage = df_energy.groupby(['interval_date']).agg(
         column='meter_consumption_kwh', aggfunc='sum'),
 )
 
-df_min_max = df[['min_temperature_c', 'max_temperature_c']]
-df_min_max = df[['min_temperature_c', 'max_temperature_c']]
-df_min_max['min_temperature_c'] = pd.to_numeric(
-    df_min_max['min_temperature_c'], errors='coerce')
-df_min_max['max_temperature_c'] = pd.to_numeric(
-    df_min_max['max_temperature_c'], errors='coerce')
+df_min_max = df[['min_temperature_c', 'max_temperature_c']].astype('float')
 dfm = df_daily_usage.join(df_min_max)
-# dfm = dfm.loc['2017-01-01':'2019-11-30']
 dfm
-
 
 # %%
 
 title = f"Daily Gross Usage vs. Daily min and max Temperatures"
 fig, axes = plt.subplots()
 axes.scatter(x=dfm['min_temperature_c'],
-             y=dfm['gross_usage_kwh'], label='min')
+             y=dfm['gross_usage_kwh'], label='Day min')
+
+p = np.poly1d(z)
 axes.scatter(x=dfm['max_temperature_c'],
-             y=dfm['gross_usage_kwh'], label='max')
+             y=dfm['gross_usage_kwh'], label='Day max')
 axes.set_xlabel('Temperature C')
 axes.set_ylabel('Day Gross Usage kWh')
 axes.set_title(title)
 axes.grid(True)
 axes.legend()
+
+# %% [markdown]
+
+# There seems to be some non-linear trend.  As temperature increases, gross usage increases.
+# However, this trend reverses around 22 degrees (just based on visuals) where gross usage
+# increases as temperature decreases.
+
+# TODO - R&D on calculating and plotting non-linear trendlines.
+
 
 # %%
