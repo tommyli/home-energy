@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 from google.cloud.storage import Blob
 
-from .. import (GCP_STORAGE_BUCKET_ID, NMI, init_firestore_client,
-                init_gcp_logger, init_storage_client)
+from app import (GCP_STORAGE_BUCKET_ID, NMI, init_firestore_client,
+                 init_gcp_logger, init_storage_client)
 
 
 def on_http_fetch_dailies(request):

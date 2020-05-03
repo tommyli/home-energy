@@ -1,11 +1,11 @@
 from datetime import date, datetime, timedelta
 
-from .. import (ENLIGHTEN_API_KEY, ENLIGHTEN_DATA_MIN_DATE,
-                ENLIGHTEN_STORAGE_PATH_PREFIX, ENLIGHTEN_SYSTEM_ID,
-                ENLIGHTEN_USER_ID, GCP_STORAGE_BUCKET_ID, init_gcp_logger,
-                init_storage_client)
-from ..common import get_already_fetched, idate_range
-from ..enlighten import get_enlighten_stats_resp
+from app import (ENLIGHTEN_API_KEY, ENLIGHTEN_DATA_MIN_DATE,
+                 ENLIGHTEN_STORAGE_PATH_PREFIX, ENLIGHTEN_SYSTEM_ID,
+                 ENLIGHTEN_USER_ID, GCP_STORAGE_BUCKET_ID, init_gcp_logger,
+                 init_storage_client)
+from app.common import get_already_fetched, idate_range
+from app.enlighten import get_enlighten_stats_resp
 
 # If blob name already exists but file size is small then it's probably an API error messgage only.
 ALREADY_FETCHED_SIZE_THRESHOLD_BYTES = 1024

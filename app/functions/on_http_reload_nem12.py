@@ -1,5 +1,6 @@
-from .. import GCP_STORAGE_BUCKET_ID, NMI, init_gcp_logger, init_storage_client
-from ..nem12 import handle_nem12_blob_merged
+from app import (GCP_STORAGE_BUCKET_ID, NMI, init_gcp_logger,
+                 init_storage_client)
+from app.nem12 import handle_nem12_blob_merged
 
 
 def on_http_reload_nem12(request):

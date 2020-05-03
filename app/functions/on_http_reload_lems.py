@@ -4,10 +4,10 @@ from datetime import datetime
 import pandas as pd
 from google.cloud.storage import Blob
 
-from .. import (GCP_STORAGE_BUCKET_ID, LEMS_STORAGE_PATH_PREFIX, NMI,
-                init_gcp_logger, init_storage_client)
-from ..common import get_already_fetched, merge_df_to_db
-from ..lems import create_df_with_yesterday, create_normalised_lems_df
+from app import (GCP_STORAGE_BUCKET_ID, LEMS_STORAGE_PATH_PREFIX, NMI,
+                 init_gcp_logger, init_storage_client)
+from app.common import get_already_fetched, merge_df_to_db
+from app.lems import create_df_with_yesterday, create_normalised_lems_df
 
 
 def on_http_reload_lems(request):

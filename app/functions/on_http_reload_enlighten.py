@@ -5,10 +5,10 @@ from datetime import datetime
 import pandas as pd
 from google.cloud.storage import Blob
 
-from .. import (ENLIGHTEN_STORAGE_PATH_PREFIX, GCP_STORAGE_BUCKET_ID, NMI,
-                init_gcp_logger, init_storage_client)
-from ..common import get_already_fetched, merge_df_to_db
-from ..enlighten import create_normalised_enlighten_stats_df
+from app import (ENLIGHTEN_STORAGE_PATH_PREFIX, GCP_STORAGE_BUCKET_ID, NMI,
+                 init_gcp_logger, init_storage_client)
+from app.common import get_already_fetched, merge_df_to_db
+from app.enlighten import create_normalised_enlighten_stats_df
 
 
 def on_http_reload_enlighten(request):
