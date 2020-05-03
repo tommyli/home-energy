@@ -26,6 +26,8 @@ LEMS_STORAGE_PATH_PREFIX = os.environ.get(
 LEMS_DATA_MIN_DATE = os.environ.get(
     'LEMS_DATA_MIN_DATE', 'LEMS_DATA_MIN_DATE not set.')
 
+NEM12_DATA_MIN_DATE = os.environ.get(
+    'NEM12_DATA_MIN_DATE', 'NEM12_DATA_MIN_DATE not set.')
 NEM12_STORAGE_PATH_IN = os.environ.get(
     'NEM12_STORAGE_PATH_IN', 'NEM12_STORAGE_PATH_IN not set.')
 NEM12_STORAGE_PATH_MERGED = os.environ.get(
