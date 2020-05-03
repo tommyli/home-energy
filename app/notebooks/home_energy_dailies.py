@@ -157,7 +157,7 @@ axes.legend()
 # %% [markdown]
 # ## Comparing seasons
 #
-#
+# ### Gross Usage Across Seasons
 
 # %%
 seasons = [
@@ -178,8 +178,39 @@ for season_data in seasons_data:
     dfm = season_data.get('dfm')
     df_hh_mean = dfm.groupby(['interval']).agg(
         gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='mean'),
+        meter_consumption_kwh=pd.NamedAgg(
+            column='meter_consumption_kwh', aggfunc='mean'),
     )
-    axes.plot(x, df_hh_mean['gross_usage_kwh'], label=season_data.get('name'))
+    axes.plot(x, df_hh_mean['gross_usage_kwh'],
+              label=f"{season_data.get('name')} - Gross")
+    axes.plot(x, df_hh_mean['meter_consumption_kwh'],
+              label=f"{season_data.get('name')} - Net")
+
+axes.set_xlabel('intervals')
+axes.set_ylabel('kWh')
+axes.set_title(title)
+axes.legend()
+
+# %% [markdown]
+# ### Solar Generations Across Seasons
+
+# %%
+title = 'Solar HH Mean - Seasons'
+x = np.linspace(1, 48, num=48)
+fig, axes = plt.subplots()
+
+for season_data in seasons_data:
+    dfm = season_data.get('dfm')
+    df_hh_mean = dfm.groupby(['interval']).agg(
+        solar_generation_kwh=pd.NamedAgg(
+            column='solar_generation_kwh', aggfunc='mean'),
+        meter_generation_kwh=pd.NamedAgg(
+            column='meter_generation_kwh', aggfunc='mean'),
+    )
+    axes.plot(x, df_hh_mean['solar_generation_kwh'],
+              label=f"{season_data.get('name')} - Gross")
+    axes.plot(x, df_hh_mean['meter_generation_kwh'],
+              label=f"{season_data.get('name')} - Net")
 
 axes.set_xlabel('intervals')
 axes.set_ylabel('kWh')
@@ -253,5 +284,41 @@ for period_data in periods_data:
     axes.set_title(title)
     axes.legend()
 
+
+# %% [markdown]
+
+# ## Temperature Impacts
+
+# %%
+df_daily_usage = df_energy.groupby(['interval_date']).agg(
+    gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='sum'),
+    meter_consumption_kwh=pd.NamedAgg(
+        column='meter_consumption_kwh', aggfunc='sum'),
+)
+
+df_min_max = df[['min_temperature_c', 'max_temperature_c']]
+df_min_max = df[['min_temperature_c', 'max_temperature_c']]
+df_min_max['min_temperature_c'] = pd.to_numeric(
+    df_min_max['min_temperature_c'], errors='coerce')
+df_min_max['max_temperature_c'] = pd.to_numeric(
+    df_min_max['max_temperature_c'], errors='coerce')
+dfm = df_daily_usage.join(df_min_max)
+# dfm = dfm.loc['2017-01-01':'2019-11-30']
+dfm
+
+
+# %%
+
+title = f"Daily Gross Usage vs. Daily min and max Temperatures"
+fig, axes = plt.subplots()
+axes.scatter(x=dfm['min_temperature_c'],
+             y=dfm['gross_usage_kwh'], label='min')
+axes.scatter(x=dfm['max_temperature_c'],
+             y=dfm['gross_usage_kwh'], label='max')
+axes.set_xlabel('Temperature C')
+axes.set_ylabel('Day Gross Usage kWh')
+axes.set_title(title)
+axes.grid(True)
+axes.legend()
 
 # %%
