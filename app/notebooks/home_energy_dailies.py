@@ -306,8 +306,6 @@ title = f"Daily Gross Usage vs. Daily min and max Temperatures"
 fig, axes = plt.subplots()
 axes.scatter(x=dfm['min_temperature_c'],
              y=dfm['gross_usage_kwh'], label='Day min')
-
-p = np.poly1d(z)
 axes.scatter(x=dfm['max_temperature_c'],
              y=dfm['gross_usage_kwh'], label='Day max')
 axes.set_xlabel('Temperature C')
