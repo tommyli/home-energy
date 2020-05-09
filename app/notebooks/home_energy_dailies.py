@@ -107,30 +107,40 @@ df_energy_hh
 # %% [markdown]
 # We can now derive new data based on existing raw data in dataframe.
 #
+# ### Solar Self Use
+#
+# Solar Self Use is any solar energy that gets used immediately within the household during
+# sunlight hours, i.e. excludes any battery storage.
+#
+# `solar_self_kwh` = `solar_generation_kwh - meter_generation_kwh - charge_quantity_kwh`
+#
 # ### Gross Usage
 #
 # Gross usage is what the usage would be as measured by the meter if no solar nor battery exists.
 # This provides a good baseline to compare how the household uses energy.
 # The usage measured at the meter is no longer accurate for households with either solar and/or
-# batteries installed so this would have to be calculated.
+# batteries installed so this would have to be derived using formula below.
 #
-# `gross_usage_kwh` = `meter_consumption_kwh + (solar_generation_kwh - meter_generation_kwh - charge_quantity_kwh) + discharge_quantity_kwh`
+# `gross_usage_kwh` = `meter_consumption_kwh + solar_self_kwh + discharge_quantity_kwh`
 #
 # ### Self Consumption
 #
 # Self consumption is the amount solar energy used within the household, whether
 # that is used during sunlight hours or stored in the battery for later use.
 #
-# `self_consumption_kwh` = `solar_generation_kwh - meter_generation_kwh - charge_quantity_kwh + discharge_quantity_kwh`
+# `self_consumption_kwh` = `solar_self_kwh + discharge_quantity_kwh`
 
 
 # %%
+df_energy_hh['solar_self_kwh'] = df_energy_hh['solar_generation_kwh'] - \
+    df_energy_hh['meter_generation_kwh'] - df_energy_hh['charge_quantity_kwh']
+
 df_energy_hh['gross_usage_kwh'] = df_energy_hh['meter_consumption_kwh'] + \
-    (df_energy_hh['solar_generation_kwh'] - df_energy_hh['meter_generation_kwh'] -
-     df_energy_hh['charge_quantity_kwh']) + df_energy_hh['discharge_quantity_kwh']
-df_energy_hh['self_consumption_kwh'] = df_energy_hh['solar_generation_kwh'] - \
-    df_energy_hh['meter_generation_kwh'] - df_energy_hh['charge_quantity_kwh'] + \
+    df_energy_hh['solar_self_kwh'] + df_energy_hh['discharge_quantity_kwh']
+
+df_energy_hh['self_consumption_kwh'] = df_energy_hh['solar_self_kwh'] + \
     df_energy_hh['discharge_quantity_kwh']
+
 df_energy_hh
 
 # %% [markdown]
@@ -139,22 +149,32 @@ df_energy_hh
 
 # %%
 df_energy_daily = df_energy_hh.groupby(['interval_date']).agg(
-    meter_consumption_kwh=pd.NamedAgg(
+    meter_consumption_kwh_mean=pd.NamedAgg(
         column='meter_consumption_kwh', aggfunc='mean'),
-    meter_generation_kwh=pd.NamedAgg(
+    meter_consumption_kwh_sum=pd.NamedAgg(
+        column='meter_consumption_kwh', aggfunc='sum'),
+    meter_generation_kwh_mean=pd.NamedAgg(
         column='meter_generation_kwh', aggfunc='mean'),
-    solar_generation_kwh=pd.NamedAgg(
+    meter_generation_kwh_sum=pd.NamedAgg(
+        column='meter_generation_kwh', aggfunc='sum'),
+    solar_generation_kwh_mean=pd.NamedAgg(
         column='solar_generation_kwh', aggfunc='mean'),
+    solar_generation_kwh_sum=pd.NamedAgg(
+        column='solar_generation_kwh', aggfunc='sum'),
     solar_mean_powr_kw=pd.NamedAgg(
         column='solar_mean_powr_kw', aggfunc='mean'),
     solar_devices_reporting=pd.NamedAgg(
-        column='solar_devices_reporting', aggfunc='median'),
+        column='solar_devices_reporting', aggfunc='max'),
     capacity_kw=pd.NamedAgg(
         column='capacity_kw', aggfunc='mean'),
-    charge_quantity_kwh=pd.NamedAgg(
+    charge_quantity_kwh_mean=pd.NamedAgg(
         column='charge_quantity_kwh', aggfunc='mean'),
-    discharge_quantity_kwh=pd.NamedAgg(
+    charge_quantity_kwh_sum=pd.NamedAgg(
+        column='charge_quantity_kwh', aggfunc='sum'),
+    discharge_quantity_kwh_mean=pd.NamedAgg(
         column='discharge_quantity_kwh', aggfunc='mean'),
+    discharge_quantity_kwh_sum=pd.NamedAgg(
+        column='discharge_quantity_kwh', aggfunc='sum'),
     deterioration_state_pct=pd.NamedAgg(
         column='deterioration_state_pct', aggfunc='mean'),
     power_at_charge_kw=pd.NamedAgg(
@@ -162,18 +182,26 @@ df_energy_daily = df_energy_hh.groupby(['interval_date']).agg(
     residual_capacity_pct=pd.NamedAgg(
         column='residual_capacity_pct', aggfunc='mean'),
     total_charge_quantity_kwh=pd.NamedAgg(
-        column='total_charge_quantity_kwh', aggfunc='mean'),
+        column='total_charge_quantity_kwh', aggfunc='last'),
     total_discharge_quantity_kwh=pd.NamedAgg(
-        column='total_discharge_quantity_kwh', aggfunc='mean'),
-    gross_usage_kwh=pd.NamedAgg(
+        column='total_discharge_quantity_kwh', aggfunc='last'),
+    solar_self_kwh_mean=pd.NamedAgg(
+        column='solar_self_kwh', aggfunc='mean'),
+    solar_self_kwh_sum=pd.NamedAgg(
+        column='solar_self_kwh', aggfunc='sum'),
+    gross_usage_kwh_mean=pd.NamedAgg(
         column='gross_usage_kwh', aggfunc='mean'),
-    self_consumption_kwh=pd.NamedAgg(
+    gross_usage_kwh_sum=pd.NamedAgg(
+        column='gross_usage_kwh', aggfunc='sum'),
+    self_consumption_kwh_mean=pd.NamedAgg(
         column='self_consumption_kwh', aggfunc='mean'),
+    self_consumption_kwh_sum=pd.NamedAgg(
+        column='self_consumption_kwh', aggfunc='sum'),
 )
 
 df_min_max = df[['min_temperature_c', 'max_temperature_c']].astype('float')
 df_energy_daily = df_energy_daily.join(df_min_max)
-df_energy_daily
+df_energy_daily.tail()
 
 # %% [markdown]
 # ## Comparing Workdays and Non-workdays
@@ -199,7 +227,7 @@ df_non_workdays_hh_mean = df_non_workdays.groupby(['interval']).agg(
     gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='mean'),
 )
 
-title = 'Gross Usage HH Mean - workdays vs. holidays'
+title = 'Gross Consumption HH Mean - workdays vs. holidays'
 x = np.linspace(1, 48, num=48)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 axes.plot(x, df_workdays_hh_mean['gross_usage_kwh'], label='workdays')
@@ -212,7 +240,7 @@ axes.legend()
 # %% [markdown]
 # ## Comparing seasons
 #
-# ### Gross Usage Across Seasons
+# ### Gross Consumption Across Seasons
 
 # %%
 seasons = [
@@ -225,7 +253,7 @@ seasons = [
 seasons_data = [{'dfm': df_energy_hh.loc[df_energy_hh.index.month.isin(
     season.get('months'))], **season} for season in seasons]
 
-title = 'Gross Usage HH Mean - Seasons'
+title = 'Consumption HH Mean - Seasons'
 x = np.linspace(1, 48, num=48)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 
@@ -237,9 +265,7 @@ for season_data in seasons_data:
             column='meter_consumption_kwh', aggfunc='mean'),
     )
     axes.plot(x, df_hh_mean['gross_usage_kwh'],
-              label=f"{season_data.get('name')} - Gross")
-    axes.plot(x, df_hh_mean['meter_consumption_kwh'],
-              label=f"{season_data.get('name')} - Net")
+              label=season_data.get('name'))
 
 axes.set_xlabel('intervals')
 axes.set_ylabel('kWh')
@@ -247,10 +273,10 @@ axes.set_title(title)
 axes.legend()
 
 # %% [markdown]
-# ### Solar Generations Across Seasons
+# ### Gross Generation Across Seasons
 
 # %%
-title = 'Solar HH Mean - Seasons'
+title = 'Gross Solar HH Mean - Seasons'
 x = np.linspace(1, 48, num=48)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 
@@ -263,9 +289,7 @@ for season_data in seasons_data:
             column='meter_generation_kwh', aggfunc='mean'),
     )
     axes.plot(x, df_hh_mean['solar_generation_kwh'],
-              label=f"{season_data.get('name')} - Gross")
-    axes.plot(x, df_hh_mean['meter_generation_kwh'],
-              label=f"{season_data.get('name')} - Net")
+              label=season_data.get('name'))
 
 axes.set_xlabel('intervals')
 axes.set_ylabel('kWh')
@@ -273,10 +297,51 @@ axes.set_title(title)
 axes.legend()
 
 # %% [markdown]
+
+# ## Temperature Impacts
+
+# %%
+
+title = f"Daily Gross Usage vs. Daily min and max Temperatures"
+fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
+y = df_energy_daily['gross_usage_kwh_sum']
+axes.scatter(x=df_energy_daily['min_temperature_c'],
+             y=y, label='Day min')
+axes.scatter(x=df_energy_daily['max_temperature_c'],
+             y=y, label='Day max')
+axes.set_xlabel('Temperature C')
+axes.set_ylabel('Day Gross Usage kWh')
+axes.set_title(title)
+axes.grid(True)
+axes.legend()
+
+# %%
+title = f"Daily Gross Generation vs. Daily min and max Temperatures"
+fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
+has_solar = df_energy_daily['solar_devices_reporting'] > 0
+y = df_energy_daily['solar_generation_kwh_sum'].loc[has_solar]
+axes.scatter(x=df_energy_daily['min_temperature_c'].loc[has_solar],
+             y=y, label='Day min')
+axes.scatter(x=df_energy_daily['max_temperature_c'].loc[has_solar],
+             y=y, label='Day max')
+axes.set_xlabel('Temperature C')
+axes.set_ylabel('Day Gross Solar Generation kWh')
+axes.set_title(title)
+axes.grid(True)
+axes.legend()
+
+# %% [markdown]
+
+# There seems to be some non-linear trend with Gross Usage vs. Temperature.  As temperature increases,
+# gross usage increases.  However, this trend reverses around 22 degrees (just based on visuals)
+# where gross usage increases as temperature decreases.
+
+# TODO - R&D on calculating and plotting non-linear trendlines.
+
+# %% [markdown]
 # ## Comparing different event periods
 #
 # Here, we define the periods we want to compare and create list of event periods (date ranges) as plot data.
-#
 #
 
 # %%
@@ -300,21 +365,24 @@ for p in periods:
         df_energy_hh.index <= p.get('actual_end'))
     df_period = df_energy_hh.loc[date_mask]
     df_hh_mean = df_period.groupby(['interval']).agg(
-        meter_consumptions_kwh=pd.NamedAgg(
+        meter_consumption_kwh=pd.NamedAgg(
             column='meter_consumption_kwh', aggfunc='mean'),
-        meter_generations_kwh=pd.NamedAgg(
+        meter_generation_kwh=pd.NamedAgg(
             column='meter_generation_kwh', aggfunc='mean'),
-        solar_generations_kwh=pd.NamedAgg(
+        solar_generation_kwh=pd.NamedAgg(
             column='solar_generation_kwh', aggfunc='mean'),
         charge_quantity_kwh=pd.NamedAgg(
             column='charge_quantity_kwh', aggfunc='mean'),
         discharge_quantity_kwh=pd.NamedAgg(
             column='discharge_quantity_kwh', aggfunc='mean'),
+        solar_self_kwh=pd.NamedAgg(
+            column='solar_self_kwh', aggfunc='mean'),
         gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='mean'),
+        self_consumption_kwh=pd.NamedAgg(
+            column='self_consumption_kwh', aggfunc='mean'),
     )
     period_data['df_hh_mean'] = df_hh_mean
     periods_data.append(period_data)
-
 
 # %%
 for period_data in periods_data:
@@ -324,119 +392,152 @@ for period_data in periods_data:
             "Skipping period '%s' because there's no data.", period_data.get('name'))
         continue
 
-    title = f"HH Mean ({period_data.get('name')}) - {period_data.get('actual_start')} to {period_data.get('actual_end')}"
+    title = f"Half Hourly Mean {period_data.get('name')} - {period_data.get('actual_start')} to {period_data.get('actual_end')}"
     x = np.linspace(1, 48, num=48)
-    fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
-    axes.plot(x, df_hh_mean['meter_consumptions_kwh'], label='meter_con')
-    axes.plot(x, df_hh_mean['meter_generations_kwh'], label='meter_gen')
-    axes.plot(x, df_hh_mean['solar_generations_kwh'], label='solar_gen')
-    axes.plot(x, df_hh_mean['charge_quantity_kwh'], label='battery_charge')
-    axes.plot(x, df_hh_mean['discharge_quantity_kwh'],
-              label='battery_discharge')
-    axes.plot(x, df_hh_mean['gross_usage_kwh'], label='gross_usage')
-    axes.set_xlabel('intervals')
+    fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
+    plt.xticks(rotation='vertical')
+
+    y_discharge_quantity_kwh = df_hh_mean['discharge_quantity_kwh']
+    y_meter_consumption_kwh = df_hh_mean['meter_consumption_kwh']
+    y_solar_self = df_hh_mean['solar_self_kwh']
+
+    y_solar_generation_kwh = df_hh_mean['solar_generation_kwh'] * -1
+    y_meter_generation_kwh = df_hh_mean['meter_generation_kwh'] * -1
+    y_charge_quantity_kwh = df_hh_mean['charge_quantity_kwh'] * -1
+
+    axes.bar(x=x,
+             height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
+    axes.bar(x=x,
+             height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
+    axes.bar(x=x,
+             height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
+
+    axes.bar(x=x,
+             height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
+    axes.bar(x=x,
+             height=y_meter_generation_kwh, label='Grid Generation', align='edge')
+    axes.bar(x=x,
+             height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
+
+    axes.set_xlabel('Time - Interval')
     axes.set_ylabel('kWh')
     axes.set_title(title)
     axes.legend()
-
 
 # %% [markdown]
 # ## Gross vs. Net - Weekly and Monthly
 
 # %%
 df_energy_weekly = df_energy_daily.groupby(df_energy_daily.index.to_period('W')).agg(
-    gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='sum'),
     meter_consumption_kwh=pd.NamedAgg(
-        column='meter_consumption_kwh', aggfunc='sum'),
+        column='meter_consumption_kwh_sum', aggfunc='sum'),
     solar_generation_kwh=pd.NamedAgg(
-        column='solar_generation_kwh', aggfunc='sum'),
+        column='solar_generation_kwh_sum', aggfunc='sum'),
     meter_generation_kwh=pd.NamedAgg(
-        column='meter_generation_kwh', aggfunc='sum'),
+        column='meter_generation_kwh_sum', aggfunc='sum'),
+    charge_quantity_kwh=pd.NamedAgg(
+        column='charge_quantity_kwh_sum', aggfunc='sum'),
+    discharge_quantity_kwh=pd.NamedAgg(
+        column='discharge_quantity_kwh_sum', aggfunc='sum'),
+    solar_self_kwh=pd.NamedAgg(
+        column='solar_self_kwh_sum', aggfunc='sum'),
+    gross_usage_kwh=pd.NamedAgg(
+        column='gross_usage_kwh_sum', aggfunc='sum'),
+    self_consumption_kwh=pd.NamedAgg(
+        column='self_consumption_kwh_sum', aggfunc='sum'),
 )
+df_energy_weekly
+# %%
 x = df_energy_weekly.index.strftime('%Y-W%W')
-y_gross_usage = df_energy_weekly['gross_usage_kwh']
-y_net_usage = df_energy_weekly['meter_consumption_kwh']
-y_solar_gen = df_energy_weekly['solar_generation_kwh'] * -1
-y_meter_gen = df_energy_weekly['meter_generation_kwh'] * -1
 
-title = f"Weekly Gross vs. Net"
+y_discharge_quantity_kwh = df_energy_weekly['discharge_quantity_kwh']
+y_meter_consumption_kwh = df_energy_weekly['meter_consumption_kwh']
+y_solar_self = df_energy_weekly['solar_self_kwh']
+
+y_solar_generation_kwh = df_energy_weekly['solar_generation_kwh'] * -1
+y_meter_generation_kwh = df_energy_weekly['meter_generation_kwh'] * -1
+y_charge_quantity_kwh = df_energy_weekly['charge_quantity_kwh'] * -1
+
+title = f"Actual by Week"
 fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
 plt.xticks(rotation='vertical')
+
 axes.bar(x=x,
-         height=y_gross_usage, label='Gross Usage', align='edge')
+         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
 axes.bar(x=x,
-         height=y_net_usage, label='Net Usage', align='edge')
+         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
 axes.bar(x=x,
-         height=y_solar_gen, label='Gross Generation', align='edge')
+         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
+
 axes.bar(x=x,
-         height=y_meter_gen, label='Net Generation', align='edge')
-axes.set_xlabel('Time')
+         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
+axes.bar(x=x,
+         height=y_meter_generation_kwh, label='Grid Generation', align='edge')
+axes.bar(x=x,
+         height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
+
+axes.set_xlabel('Time - Week')
 for idx, label in enumerate(axes.xaxis.get_ticklabels()):
     if idx % 4 != 0:
         label.set_visible(False)
 
-axes.set_ylabel('Usage kWh')
+axes.set_ylabel('kWh')
 axes.set_title(title)
 axes.legend()
 
 # %%
 df_energy_monthly = df_energy_daily.groupby(df_energy_daily.index.to_period('M')).agg(
-    gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='sum'),
     meter_consumption_kwh=pd.NamedAgg(
-        column='meter_consumption_kwh', aggfunc='sum'),
+        column='meter_consumption_kwh_sum', aggfunc='sum'),
     solar_generation_kwh=pd.NamedAgg(
-        column='solar_generation_kwh', aggfunc='sum'),
+        column='solar_generation_kwh_sum', aggfunc='sum'),
     meter_generation_kwh=pd.NamedAgg(
-        column='meter_generation_kwh', aggfunc='sum'),
+        column='meter_generation_kwh_sum', aggfunc='sum'),
+    charge_quantity_kwh=pd.NamedAgg(
+        column='charge_quantity_kwh_sum', aggfunc='sum'),
+    discharge_quantity_kwh=pd.NamedAgg(
+        column='discharge_quantity_kwh_sum', aggfunc='sum'),
+    solar_self_kwh=pd.NamedAgg(
+        column='solar_self_kwh_sum', aggfunc='sum'),
+    gross_usage_kwh=pd.NamedAgg(
+        column='gross_usage_kwh_sum', aggfunc='sum'),
+    self_consumption_kwh=pd.NamedAgg(
+        column='self_consumption_kwh_sum', aggfunc='sum'),
 )
-
-x = df_energy_monthly.index.strftime('%Y-%m')
-y_gross_usage = df_energy_monthly['gross_usage_kwh']
-y_net_usage = df_energy_monthly['meter_consumption_kwh']
-y_solar_gen = df_energy_monthly['solar_generation_kwh'] * -1
-y_meter_gen = df_energy_monthly['meter_generation_kwh'] * -1
-
-title = f"Monthly Gross vs. Net"
-fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
-plt.xticks(rotation='vertical')
-axes.bar(x=x,
-         height=y_gross_usage, label='Gross Usage', align='edge')
-axes.bar(x=x,
-         height=y_net_usage, label='Net Usage', align='edge')
-axes.bar(x=x,
-         height=y_solar_gen, label='Gross Generation', align='edge')
-axes.bar(x=x,
-         height=y_meter_gen, label='Net Generation', align='edge')
-axes.set_xlabel('Time')
-axes.set_ylabel('Usage kWh')
-axes.set_title(title)
-axes.legend()
-
-# %% [markdown]
-
-# ## Temperature Impacts
+df_energy_monthly
 
 # %%
+x = df_energy_monthly.index.strftime('%Y-%m')
 
-title = f"Daily Gross Usage vs. Daily min and max Temperatures"
-fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
-y = df_energy_daily['gross_usage_kwh']
-axes.scatter(x=df_energy_daily['min_temperature_c'],
-             y=y, label='Day min')
-axes.scatter(x=df_energy_daily['max_temperature_c'],
-             y=y, label='Day max')
-axes.set_xlabel('Temperature C')
-axes.set_ylabel('Day Gross Usage kWh')
+y_discharge_quantity_kwh = df_energy_monthly['discharge_quantity_kwh']
+y_meter_consumption_kwh = df_energy_monthly['meter_consumption_kwh']
+y_solar_self = df_energy_monthly['solar_self_kwh']
+
+y_solar_generation_kwh = df_energy_monthly['solar_generation_kwh'] * -1
+y_meter_generation_kwh = df_energy_monthly['meter_generation_kwh'] * -1
+y_charge_quantity_kwh = df_energy_monthly['charge_quantity_kwh'] * -1
+
+title = f"Actual by Month"
+fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
+plt.xticks(rotation='vertical')
+
+axes.bar(x=x,
+         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
+axes.bar(x=x,
+         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
+axes.bar(x=x,
+         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
+
+axes.bar(x=x,
+         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
+axes.bar(x=x,
+         height=y_meter_generation_kwh, label='Grid Generation', align='edge')
+axes.bar(x=x,
+         height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
+
+axes.set_xlabel('Time - Month')
+axes.set_ylabel('kWh')
 axes.set_title(title)
-axes.grid(True)
 axes.legend()
-
-# %% [markdown]
-
-# There seems to be some non-linear trend.  As temperature increases, gross usage increases.
-# However, this trend reverses around 22 degrees (just based on visuals) where gross usage
-# increases as temperature decreases.
-
-# TODO - R&D on calculating and plotting non-linear trendlines.
 
 # %%
