@@ -20,6 +20,7 @@ import numpy as np
 import pandas as pd
 from google.cloud import storage
 from more_itertools import flatten
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from workalendar.oceania.australia import Victoria as VicHolidayCalendar
 
 logger = logging.getLogger()
@@ -176,7 +177,7 @@ df_energy_daily = df_energy_hh.groupby(['interval_date']).agg(
     discharge_quantity_kwh_sum=pd.NamedAgg(
         column='discharge_quantity_kwh', aggfunc='sum'),
     deterioration_state_pct=pd.NamedAgg(
-        column='deterioration_state_pct', aggfunc='mean'),
+        column='deterioration_state_pct', aggfunc='max'),
     power_at_charge_kw=pd.NamedAgg(
         column='power_at_charge_kw', aggfunc='mean'),
     residual_capacity_pct=pd.NamedAgg(
@@ -201,7 +202,7 @@ df_energy_daily = df_energy_hh.groupby(['interval_date']).agg(
 
 df_min_max = df[['min_temperature_c', 'max_temperature_c']].astype('float')
 df_energy_daily = df_energy_daily.join(df_min_max)
-df_energy_daily.tail()
+df_energy_daily
 
 # %% [markdown]
 # ## Comparing Workdays and Non-workdays
@@ -385,6 +386,8 @@ for p in periods:
     periods_data.append(period_data)
 
 # %%
+# TODO - Use fixed y-scale for all periods
+# TODO - Use less vibrant colours and safe for colour blindness
 for period_data in periods_data:
     df_hh_mean = period_data['df_hh_mean']
     if len(df_hh_mean.index) == 0:
@@ -413,7 +416,7 @@ for period_data in periods_data:
              height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
 
     axes.bar(x=x,
-             height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
+             height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color='grey', hatch='//')
     axes.bar(x=x,
              height=y_meter_generation_kwh, label='Grid Generation', align='edge')
     axes.bar(x=x,
@@ -445,6 +448,12 @@ df_energy_weekly = df_energy_daily.groupby(df_energy_daily.index.to_period('W'))
         column='gross_usage_kwh_sum', aggfunc='sum'),
     self_consumption_kwh=pd.NamedAgg(
         column='self_consumption_kwh_sum', aggfunc='sum'),
+    deterioration_state_pct=pd.NamedAgg(
+        column='deterioration_state_pct', aggfunc='max'),
+    min_temperature_c_mean=pd.NamedAgg(
+        column='min_temperature_c', aggfunc='mean'),
+    max_temperature_c_mean=pd.NamedAgg(
+        column='max_temperature_c', aggfunc='mean'),
 )
 df_energy_weekly
 # %%
@@ -458,10 +467,11 @@ y_solar_generation_kwh = df_energy_weekly['solar_generation_kwh'] * -1
 y_meter_generation_kwh = df_energy_weekly['meter_generation_kwh'] * -1
 y_charge_quantity_kwh = df_energy_weekly['charge_quantity_kwh'] * -1
 
-title = f"Actual by Week"
 fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
-plt.xticks(rotation='vertical')
+divider = make_axes_locatable(axes)
 
+title = f"Actual by Week"
+plt.xticks(rotation='vertical')
 axes.bar(x=x,
          height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
 axes.bar(x=x,
@@ -470,20 +480,40 @@ axes.bar(x=x,
          height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
 
 axes.bar(x=x,
-         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
+         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color='grey', hatch='//')
 axes.bar(x=x,
          height=y_meter_generation_kwh, label='Grid Generation', align='edge')
 axes.bar(x=x,
          height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
-
 axes.set_xlabel('Time - Week')
 for idx, label in enumerate(axes.xaxis.get_ticklabels()):
-    if idx % 4 != 0:
+    if idx % 8 != 0:
         label.set_visible(False)
-
 axes.set_ylabel('kWh')
 axes.set_title(title)
 axes.legend()
+
+y_temp_min = df_energy_weekly['min_temperature_c_mean']
+y_temp_max = df_energy_weekly['max_temperature_c_mean']
+axes_max_temp = divider.append_axes("top", 1.5, pad=0.5, sharex=axes)
+axes_max_temp.set_title('Mean Min and Max Temperatures')
+axes_max_temp.set_ylabel('Temperature C')
+axes_max_temp.get_yaxis().set_label_position('right')
+axes_max_temp.get_yaxis().tick_right()
+axes_max_temp.get_xaxis().set_visible(False)
+axes_max_temp.plot(x, y_temp_min)
+axes_max_temp.plot(x, y_temp_max)
+
+y_batt_deter = df_energy_weekly['deterioration_state_pct'].replace(
+    0, np.nan) * 100
+axes_batt_health = divider.append_axes("bottom", 1.5, pad=1.5, sharex=axes)
+axes_batt_health.set_title('Battery Deterioration')
+axes_batt_health.set_ylim(ymin=0, ymax=110)
+axes_batt_health.set_ylabel('Percentage')
+axes_batt_health.get_yaxis().set_label_position('right')
+axes_batt_health.get_yaxis().tick_right()
+axes_batt_health.get_xaxis().set_visible(False)
+axes_batt_health.plot(x, y_batt_deter)
 
 # %%
 df_energy_monthly = df_energy_daily.groupby(df_energy_daily.index.to_period('M')).agg(
@@ -505,39 +535,5 @@ df_energy_monthly = df_energy_daily.groupby(df_energy_daily.index.to_period('M')
         column='self_consumption_kwh_sum', aggfunc='sum'),
 )
 df_energy_monthly
-
-# %%
-x = df_energy_monthly.index.strftime('%Y-%m')
-
-y_discharge_quantity_kwh = df_energy_monthly['discharge_quantity_kwh']
-y_meter_consumption_kwh = df_energy_monthly['meter_consumption_kwh']
-y_solar_self = df_energy_monthly['solar_self_kwh']
-
-y_solar_generation_kwh = df_energy_monthly['solar_generation_kwh'] * -1
-y_meter_generation_kwh = df_energy_monthly['meter_generation_kwh'] * -1
-y_charge_quantity_kwh = df_energy_monthly['charge_quantity_kwh'] * -1
-
-title = f"Actual by Month"
-fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
-plt.xticks(rotation='vertical')
-
-axes.bar(x=x,
-         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
-axes.bar(x=x,
-         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
-axes.bar(x=x,
-         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
-
-axes.bar(x=x,
-         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge')
-axes.bar(x=x,
-         height=y_meter_generation_kwh, label='Grid Generation', align='edge')
-axes.bar(x=x,
-         height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
-
-axes.set_xlabel('Time - Month')
-axes.set_ylabel('kWh')
-axes.set_title(title)
-axes.legend()
 
 # %%

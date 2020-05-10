@@ -4,7 +4,7 @@
 .secrets
 .snippets
 data
-app/notebooks/sandbox.ipynb
+app/notebooks/sandbox.*
 app/notebooks/.ipynb_checkpoints
 
 # End of Custom
