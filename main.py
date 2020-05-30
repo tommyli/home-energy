@@ -1,3 +1,4 @@
+from app.functions.on_fdb_dailies_write import on_fdb_dailies_write
 from app.functions.on_http_fetch_dailies import on_http_fetch_dailies
 from app.functions.on_http_fetch_weather import on_http_fetch_daily_temperatures
 from app.functions.on_http_get_enlighten_data import on_http_get_enlighten_data

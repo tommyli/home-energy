@@ -79,7 +79,7 @@ TODO - Use Google Cloud Build?
 
 ## Functions
 
-### on_storage_blob
+### on_storage_blob - on_storage_blob(data, context)
 
 This function runs on [storage triggers](https://cloud.google.com/functions/docs/calling/storage).  More specifically, blobs added to storage with following prefix namespaces are handled:
 
@@ -137,42 +137,57 @@ curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value projec
 curl -X POST --data "" "https://asia-northeast1-$(gcloud config get-value project).cloudfunctions.net/fetch_dailies" -H "Authorization: bearer $(gcloud auth print-identity-token)"
 ```
 
+### Re-calculate dailies derived data - on_fdb_dailies_write(event, context)
+
+This function runs on [Firestore triggers](https://cloud.google.com/functions/docs/calling/cloud-firestore).  More specifically, it listens to event type
+`providers/cloud.firestore/eventTypes/document.write` on resource `projects/$GCP_PROJECT/databases/(default)/documents/sites/$NMI/dailies/{dayId}`
+
 ## Deployment
 
 To deploy functions:
 
 ```bash
-gcloud functions deploy fetch_enlighten_data --entry-point on_http_get_enlighten_data --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml
+gcloud functions deploy fetch_enlighten_data --entry-point on_http_get_enlighten_data --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --trigger-http
 
-gcloud functions deploy fetch_lems_data --entry-point on_http_get_lems_data --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml
+gcloud functions deploy fetch_lems_data --entry-point on_http_get_lems_data --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --trigger-http
 
-gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime python37 --region asia-northeast1 --trigger-bucket $GCP_STORAGE_BUCKET_ID --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
+gcloud functions deploy on_storage_blob --entry-point on_storage_blob --runtime python37 --region asia-northeast1 --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540 --trigger-bucket $GCP_STORAGE_BUCKET_ID
 
-gcloud functions deploy fetch_daily_temperatures --entry-point on_http_fetch_daily_temperatures --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml
+gcloud functions deploy fetch_daily_temperatures --entry-point on_http_fetch_daily_temperatures --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --trigger-http
 
-gcloud functions deploy reload_nem12 --entry-point on_http_reload_nem12 --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
+gcloud functions deploy reload_nem12 --entry-point on_http_reload_nem12 --runtime python37 --region asia-northeast1 --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540 --trigger-http
 
-gcloud functions deploy reload_enlighten --entry-point on_http_reload_enlighten --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
+gcloud functions deploy reload_enlighten --entry-point on_http_reload_enlighten --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --timeout 540 --trigger-http
 
-gcloud functions deploy reload_lems --entry-point on_http_reload_lems --runtime python37 --region asia-northeast1 --trigger-http --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540
+gcloud functions deploy reload_lems --entry-point on_http_reload_lems --runtime python37 --region asia-northeast1 --memory=512MB --env-vars-file .secrets/.env.yaml --timeout 540 --trigger-http
 
-gcloud functions deploy fetch_dailies --entry-point on_http_fetch_dailies --runtime python37 --region asia-northeast1 --trigger-http --env-vars-file .secrets/.env.yaml --timeout 540
+gcloud functions deploy fetch_dailies --entry-point on_http_fetch_dailies --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --timeout 540 --trigger-http
+
+gcloud functions deploy on_fdb_dailies_write --entry-point on_fdb_dailies_write --runtime python37 --region asia-northeast1 --env-vars-file .secrets/.env.yaml --trigger-event providers/cloud.firestore/eventTypes/document.write --trigger-resource "projects/$GCP_PROJECT/databases/(default)/documents/sites/$NMI/dailies/{dayId}"
 ```
 
 To delete functions:
 
 ```bash
-gcloud functions delete fetch_enlighten_data
+gcloud functions delete --region asia-northeast1 fetch_enlighten_data
 
-gcloud functions delete fetch_lems_data
+gcloud functions delete --region asia-northeast1 fetch_lems_data
 
-gcloud functions delete on_storage_blob
+gcloud functions delete --region asia-northeast1 on_storage_blob
 
-gcloud functions delete reload_nem12
+gcloud functions delete --region asia-northeast1 fetch_daily_temperatures
 
-gcloud functions delete reload_enlighten
+gcloud functions delete --region asia-northeast1 reload_nem12
 
-gcloud functions delete fetch_dailies
+gcloud functions delete --region asia-northeast1 reload_enlighten
+
+gcloud functions delete --region asia-northeast1 reload_lems
+
+gcloud functions delete --region asia-northeast1 fetch_dailies
+
+gcloud functions delete --region asia-northeast1 on_fdb_dailies_write
+
+gcloud functions delete on_fdb_dailies_write
 ```
 
 To schedule jobs and run functions:
