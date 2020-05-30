@@ -13,7 +13,7 @@
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,6 +23,7 @@ from more_itertools import flatten
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from workalendar.oceania.australia import Victoria as VicHolidayCalendar
 
+# %%
 logger = logging.getLogger()
 GCP_STORAGE_BUCKET_ID = os.environ.get(
     'GCP_STORAGE_BUCKET_ID', 'GCP_STORAGE_BUCKET_ID not set.')
@@ -30,6 +31,18 @@ NMI = os.environ.get(
     'NMI', 'NMI not set.')
 MEDIUM_FIGSIZE = (12, 9)
 LARGE_FIGSIZE = (16, 12)
+
+# Use colors from palette and excluding Red, Green
+# https://github.com/d3/d3-3.x-api-reference/blob/master/Ordinal-Scales.md#category20
+BAR_COLORS = {
+    'Battery Discharge': '#aec7e8',
+    'Solar Self Use': '#1f77b4',
+    'Grid Consumption': '#c5b0d5',
+    'Gross Solar Generation': '#c49c94',
+    'Grid Generation': '#dbdb8d',
+    'Battery Charge': '#8c564b',
+}
+
 STORAGE_CLIENT = storage.Client()
 bucket = STORAGE_CLIENT.get_bucket(GCP_STORAGE_BUCKET_ID)
 pkl_file_name = f"dailies_{NMI}.pkl"
@@ -229,7 +242,7 @@ df_non_workdays_hh_mean = df_non_workdays.groupby(['interval']).agg(
 )
 
 title = 'Gross Consumption HH Mean - workdays vs. holidays'
-x = np.linspace(1, 48, num=48)
+x = np.arange(1, 49)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 axes.plot(x, df_workdays_hh_mean['gross_usage_kwh'], label='workdays')
 axes.plot(x, df_non_workdays_hh_mean['gross_usage_kwh'], label='non-workdays')
@@ -254,8 +267,8 @@ seasons = [
 seasons_data = [{'dfm': df_energy_hh.loc[df_energy_hh.index.month.isin(
     season.get('months'))], **season} for season in seasons]
 
-title = 'Consumption HH Mean - Seasons'
-x = np.linspace(1, 48, num=48)
+title = 'Gross Consumption HH Mean - Seasons'
+x = np.arange(1, 49)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 
 for season_data in seasons_data:
@@ -278,7 +291,7 @@ axes.legend()
 
 # %%
 title = 'Gross Solar HH Mean - Seasons'
-x = np.linspace(1, 48, num=48)
+x = np.arange(1, 49)
 fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
 
 for season_data in seasons_data:
@@ -304,7 +317,7 @@ axes.legend()
 # %%
 
 title = f"Daily Gross Usage vs. Daily min and max Temperatures"
-fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
+fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
 y = df_energy_daily['gross_usage_kwh_sum']
 axes.scatter(x=df_energy_daily['min_temperature_c'],
              y=y, label='Day min')
@@ -318,7 +331,7 @@ axes.legend()
 
 # %%
 title = f"Daily Gross Generation vs. Daily min and max Temperatures"
-fig, axes = plt.subplots(figsize=MEDIUM_FIGSIZE)
+fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
 has_solar = df_energy_daily['solar_devices_reporting'] > 0
 y = df_energy_daily['solar_generation_kwh_sum'].loc[has_solar]
 axes.scatter(x=df_energy_daily['min_temperature_c'].loc[has_solar],
@@ -346,6 +359,8 @@ axes.legend()
 #
 
 # %%
+two_days_ago = datetime.now() - timedelta(days=2)
+
 periods = [
     {'name': 'Epoch', 'actual_start': '2014-11-26', 'actual_end': '2015-04-06'},
     {'name': 'Installed Solar 3 kW',
@@ -355,7 +370,8 @@ periods = [
     {'name': 'Upgraded to Solar 6 kW',
         'actual_start': '2016-10-18', 'actual_end': '2019-11-30'},
     {'name': 'Purchased EV', 'actual_start': '2019-12-01', 'actual_end': '2020-03-22'},
-    {'name': 'Red EV Plan', 'actual_start': '2020-03-23', 'actual_end': '2020-12-31'},
+    {'name': 'Red EV Plan', 'actual_start': '2020-03-23',
+        'actual_end': datetime.strftime(two_days_ago, '%Y-%m-%d')},
 ]
 
 periods_data = []
@@ -386,8 +402,6 @@ for p in periods:
     periods_data.append(period_data)
 
 # %%
-# TODO - Use fixed y-scale for all periods
-# TODO - Use less vibrant colours and safe for colour blindness
 for period_data in periods_data:
     df_hh_mean = period_data['df_hh_mean']
     if len(df_hh_mean.index) == 0:
@@ -396,9 +410,8 @@ for period_data in periods_data:
         continue
 
     title = f"Half Hourly Mean {period_data.get('name')} - {period_data.get('actual_start')} to {period_data.get('actual_end')}"
-    x = np.linspace(1, 48, num=48)
+    x = np.arange(1, 49)
     fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
-    plt.xticks(rotation='vertical')
 
     y_discharge_quantity_kwh = df_hh_mean['discharge_quantity_kwh']
     y_meter_consumption_kwh = df_hh_mean['meter_consumption_kwh']
@@ -409,21 +422,22 @@ for period_data in periods_data:
     y_charge_quantity_kwh = df_hh_mean['charge_quantity_kwh'] * -1
 
     axes.bar(x=x,
-             height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
+             height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge', color=BAR_COLORS['Battery Discharge'])
     axes.bar(x=x,
-             height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
+             height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge', color=BAR_COLORS['Solar Self Use'])
     axes.bar(x=x,
-             height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
+             height=y_meter_consumption_kwh, label='Grid Consumption', align='edge', color=BAR_COLORS['Grid Consumption'])
 
     axes.bar(x=x,
-             height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color='grey', hatch='//')
+             height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color=BAR_COLORS['Gross Solar Generation'])
     axes.bar(x=x,
-             height=y_meter_generation_kwh, label='Grid Generation', align='edge')
+             height=y_meter_generation_kwh, label='Grid Generation', align='edge', color=BAR_COLORS['Grid Generation'])
     axes.bar(x=x,
-             height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
+             height=y_charge_quantity_kwh, label='Battery Charge', align='edge', color=BAR_COLORS['Battery Charge'])
 
     axes.set_xlabel('Time - Interval')
     axes.set_ylabel('kWh')
+    axes.set_ylim(ymin=-1.8, ymax=1.8)
     axes.set_title(title)
     axes.legend()
 
@@ -471,20 +485,20 @@ fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
 divider = make_axes_locatable(axes)
 
 title = f"Actual by Week"
-plt.xticks(rotation='vertical')
+plt.xticks(rotation='45')
 axes.bar(x=x,
-         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge')
+         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge', color=BAR_COLORS['Battery Discharge'])
 axes.bar(x=x,
-         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge')
+         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge', color=BAR_COLORS['Solar Self Use'])
 axes.bar(x=x,
-         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge')
+         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge', color=BAR_COLORS['Grid Consumption'])
 
 axes.bar(x=x,
-         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color='grey', hatch='//')
+         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color=BAR_COLORS['Gross Solar Generation'])
 axes.bar(x=x,
-         height=y_meter_generation_kwh, label='Grid Generation', align='edge')
+         height=y_meter_generation_kwh, label='Grid Generation', align='edge', color=BAR_COLORS['Grid Generation'])
 axes.bar(x=x,
-         height=y_charge_quantity_kwh, label='Battery Charge', align='edge')
+         height=y_charge_quantity_kwh, label='Battery Charge', align='edge', color=BAR_COLORS['Battery Charge'])
 axes.set_xlabel('Time - Week')
 for idx, label in enumerate(axes.xaxis.get_ticklabels()):
     if idx % 8 != 0:
@@ -535,5 +549,9 @@ df_energy_monthly = df_energy_daily.groupby(df_energy_daily.index.to_period('M')
         column='self_consumption_kwh_sum', aggfunc='sum'),
 )
 df_energy_monthly
+# %% [markdown]
 
-# %%
+# ## TODO
+
+# * Apply rates and plot similar charts to assess dollar impacts overtime
+# * Analyse solar generation deterioration

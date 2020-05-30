@@ -172,7 +172,7 @@ df_20161227
 
 # %%
 for dfm in [df_20161227, df_20161228]:
-    x = np.linspace(1, 48, num=48)
+    x = np.arange(1, 49)
     fig, axes = plt.subplots(figsize=(20, 10))
     axes.plot(x, dfm['gross_usage_kwh'], label='gross_usage_kwh')
     axes.plot(x, dfm['meter_consumption_kwh'],
