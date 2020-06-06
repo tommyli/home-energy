@@ -549,6 +549,62 @@ df_energy_monthly = df_energy_daily.groupby(df_energy_daily.index.to_period('M')
         column='self_consumption_kwh_sum', aggfunc='sum'),
 )
 df_energy_monthly
+
+# %% [markdown]
+
+# ## This section is for convenient viewing of the data for any particular day
+
+# %%
+dateStr = '2020-04-08'
+df_hh = df_energy_hh.loc[dateStr].groupby(['interval']).agg(
+    meter_consumption_kwh=pd.NamedAgg(
+        column='meter_consumption_kwh', aggfunc='mean'),
+    meter_generation_kwh=pd.NamedAgg(
+        column='meter_generation_kwh', aggfunc='mean'),
+    solar_generation_kwh=pd.NamedAgg(
+        column='solar_generation_kwh', aggfunc='mean'),
+    charge_quantity_kwh=pd.NamedAgg(
+        column='charge_quantity_kwh', aggfunc='mean'),
+    discharge_quantity_kwh=pd.NamedAgg(
+        column='discharge_quantity_kwh', aggfunc='mean'),
+    solar_self_kwh=pd.NamedAgg(
+        column='solar_self_kwh', aggfunc='mean'),
+    gross_usage_kwh=pd.NamedAgg(column='gross_usage_kwh', aggfunc='mean'),
+    self_consumption_kwh=pd.NamedAgg(
+        column='self_consumption_kwh', aggfunc='mean'),
+)
+df_hh
+x = np.arange(1, 49)
+fig, axes = plt.subplots(figsize=LARGE_FIGSIZE)
+
+y_discharge_quantity_kwh = df_hh['discharge_quantity_kwh']
+y_meter_consumption_kwh = df_hh['meter_consumption_kwh']
+y_solar_self = df_hh['solar_self_kwh']
+
+y_solar_generation_kwh = df_hh['solar_generation_kwh'] * -1
+y_meter_generation_kwh = df_hh['meter_generation_kwh'] * -1
+y_charge_quantity_kwh = df_hh['charge_quantity_kwh'] * -1
+
+axes.bar(x=x,
+         height=y_meter_consumption_kwh + y_solar_self + y_discharge_quantity_kwh, label='Battery Discharge', align='edge', color=BAR_COLORS['Battery Discharge'])
+axes.bar(x=x,
+         height=y_meter_consumption_kwh + y_solar_self, label='Solar Self Use', align='edge', color=BAR_COLORS['Solar Self Use'])
+axes.bar(x=x,
+         height=y_meter_consumption_kwh, label='Grid Consumption', align='edge', color=BAR_COLORS['Grid Consumption'])
+
+axes.bar(x=x,
+         height=y_solar_generation_kwh, label='Gross Solar Generation', align='edge', color=BAR_COLORS['Gross Solar Generation'])
+axes.bar(x=x,
+         height=y_meter_generation_kwh, label='Grid Generation', align='edge', color=BAR_COLORS['Grid Generation'])
+axes.bar(x=x,
+         height=y_charge_quantity_kwh, label='Battery Charge', align='edge', color=BAR_COLORS['Battery Charge'])
+
+axes.set_xlabel('Time - Interval')
+axes.set_ylabel('kWh')
+axes.set_ylim(ymin=-2.0, ymax=3.0)
+axes.set_title(dateStr)
+axes.legend()
+
 # %% [markdown]
 
 # ## TODO
