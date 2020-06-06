@@ -1,7 +1,7 @@
+import Tab from "@material-ui/core/Tab";
+import Tabs from "@material-ui/core/Tabs";
 import React, { useState } from "react";
 import { Link as RouterLink } from "react-router-dom";
-import Tabs from "@material-ui/core/Tabs";
-import Tab from "@material-ui/core/Tab";
 
 function NavigationBar() {
   const [selectedTab, updateSelectedTab] = useState("/daily");
@@ -23,12 +23,12 @@ function NavigationBar() {
         component={RouterLink}
         to={"/daily"}
       />
-      <Tab
+      {/* <Tab
         label="Weekly"
         value={"/weekly"}
         component={RouterLink}
         to={"/weekly"}
-      />
+      /> */}
     </Tabs>
   );
 }

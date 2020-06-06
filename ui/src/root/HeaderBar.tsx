@@ -1,9 +1,8 @@
-import React from "react";
 import AppBar from "@material-ui/core/AppBar";
+import Grid from "@material-ui/core/Grid";
 import Toolbar from "@material-ui/core/Toolbar";
 import Typography from "@material-ui/core/Typography";
-import Grid from "@material-ui/core/Grid";
-import CircularProgress from "@material-ui/core/CircularProgress";
+import React from "react";
 
 function HeaderBar() {
   return (
@@ -24,7 +23,7 @@ function HeaderBar() {
                 </Typography>
               </Grid>
               <Grid item>
-                <CircularProgress hidden={false} color="secondary" size={28} />
+                {/* <CircularProgress hidden={false} color="secondary" size={28} /> */}
               </Grid>
             </Grid>
           </Grid>

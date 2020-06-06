@@ -1,23 +1,28 @@
 import dayjs, { Dayjs } from "dayjs";
 import lodash from "lodash";
-import { INTERVAL_LENGTH } from "../daily";
 
 class DayData {
   private _intervalDate: Dayjs = dayjs().subtract(1, "day");
   private _meterConsumptions: readonly number[] = Object.freeze([]);
   private _meterGenerations: readonly number[] = Object.freeze([]);
-  private _batteryCharges: readonly number[] = Object.freeze([]);
+  private _solarGenerations: readonly number[] = Object.freeze([]);
+  private _chargeQuantities: readonly number[] = Object.freeze([]);
+  private _dischargeQuantities: readonly number[] = Object.freeze([]);
 
   constructor(
     intervalDate: Dayjs,
     meterConsumptions: number[],
     meterGenerations: number[],
-    batteryCharges: number[]
+    solarGenerations: number[],
+    chargeQuantities: number[],
+    dischargeQuantities: number[]
   ) {
     this._intervalDate = intervalDate;
     this._meterConsumptions = meterConsumptions;
     this._meterGenerations = meterGenerations;
-    this._batteryCharges = batteryCharges;
+    this._solarGenerations = solarGenerations;
+    this._chargeQuantities = chargeQuantities;
+    this._dischargeQuantities = dischargeQuantities;
   }
 
   get intervalDate(): Dayjs {
@@ -38,16 +43,25 @@ class DayData {
       return label;
     });
   }
-  get meterConsumptions(): readonly number[] {
-    return this._meterConsumptions;
+
+  get meterConsumptions(): number[] {
+    return this._meterConsumptions.map((v) => v);
   }
 
-  get meterGenerations(): readonly number[] {
-    return this._meterGenerations;
+  get meterGenerations(): number[] {
+    return this._meterGenerations.map((v) => v);
   }
 
-  get batteryCharges(): readonly number[] {
-    return this._batteryCharges;
+  get solarGenerations(): number[] {
+    return this._solarGenerations.map((v) => v);
+  }
+
+  get chargeQuantities(): number[] {
+    return this._chargeQuantities.map((v) => v);
+  }
+
+  get dischargeQuantities(): number[] {
+    return this._dischargeQuantities.map((v) => v);
   }
 
   get meterConsumptionTotal(): number {
@@ -67,6 +81,48 @@ class DayData {
   }
 }
 
-const EMPTY_YESTERDAY = new DayData(dayjs().subtract(1, "day"), [], [], []);
+export const EMPTY_YESTERDAY = new DayData(
+  dayjs().subtract(1, "day"),
+  [],
+  [],
+  [],
+  [],
+  []
+);
 
-export { DayData, EMPTY_YESTERDAY };
+export const INTERVAL_LENGTH: 15 | 30 = 30;
+
+export const UOM = {
+  id: "KWH",
+  name: "kWh",
+};
+
+function fromFirestoreDoc(docData: any): DayData {
+  if (docData && docData.interval_date) {
+    const intervalDate: Dayjs = dayjs(docData.interval_date.toDate());
+    const meterConsumptions: number[] =
+      docData?.meter_consumptions_kwh ?? Object.freeze([]);
+    const meterGenerations: number[] =
+      docData?.meter_generations_kwh ?? Object.freeze([]);
+    const solarGenerations: number[] =
+      docData?.solar_generations_kwh ?? Object.freeze([]);
+    const chargeQuantities: number[] =
+      docData?.charge_quantities_kwh ?? Object.freeze([]);
+    const dischargeQuantities: number[] =
+      docData?.discharge_quantities_kwh ?? Object.freeze([]);
+
+    return new DayData(
+      intervalDate,
+      meterConsumptions,
+      meterGenerations,
+      solarGenerations,
+      chargeQuantities,
+      dischargeQuantities
+    );
+  } else {
+    console.debug(`Invalid docData ${JSON.stringify(docData)}`);
+    return EMPTY_YESTERDAY;
+  }
+}
+
+export { DayData, fromFirestoreDoc };

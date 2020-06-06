@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
 import Grid from "@material-ui/core/Grid";
-import db from "../../shared/firestore";
 import dayjs, { Dayjs } from "dayjs";
+import React, { useEffect, useState } from "react";
+import db from "../../shared/firestore";
+import { DayData, EMPTY_YESTERDAY, fromFirestoreDoc } from "../models/DayData";
 import DailyChart from "./DailyChart";
 import DayCalendar from "./DayCalendar";
-import { docToDailyData } from "../daily";
-import { DayData, EMPTY_YESTERDAY } from "../models/DayData";
 
 function Daily() {
   const [dayData, updateDayData] = useState<DayData>(EMPTY_YESTERDAY);
@@ -30,29 +29,29 @@ function Daily() {
       .limit(1);
 
     latestDaily.onSnapshot(
-      querySnapshot => {
-        querySnapshot.docChanges().forEach(change => {
+      (querySnapshot) => {
+        querySnapshot.docChanges().forEach((change) => {
           const docData: any = change.doc.data();
           console.debug(`New latestDaily, doc=${JSON.stringify(docData)}`);
           updateSelectedDate(dayjs(docData.interval_date.toDate()));
           updateMaxDate(dayjs(docData.interval_date.toDate()));
-          updateDayData(docToDailyData(docData));
+          updateDayData(fromFirestoreDoc(docData));
         });
       },
-      err => {
+      (err) => {
         console.log(`Encountered error: ${err}`);
       }
     );
 
     earliestDaily.onSnapshot(
-      querySnapshot => {
-        querySnapshot.docChanges().forEach(change => {
+      (querySnapshot) => {
+        querySnapshot.docChanges().forEach((change) => {
           const docData: any = change.doc.data();
           console.debug(`New earliestDaily, doc=${JSON.stringify(docData)}`);
           updateMinDate(dayjs(docData.interval_date.toDate()));
         });
       },
-      err => {
+      (err) => {
         console.log(`Encountered error: ${err}`);
       }
     );
@@ -68,11 +67,11 @@ function Daily() {
         .doc(`${date.format("YYYYMMDD")}`);
 
       docRef.onSnapshot(
-        docSnapshot => {
+        (docSnapshot) => {
           const docData: any = docSnapshot.data();
-          updateDayData(docToDailyData(docData));
+          updateDayData(fromFirestoreDoc(docData));
         },
-        err => {
+        (err) => {
           console.log(`Encountered error: ${err}`);
         }
       );
@@ -89,15 +88,15 @@ function Daily() {
         alignItems={"flex-start"}
       >
         <Grid item>
-          <DailyChart dayData={dayData} />
-        </Grid>
-        <Grid item>
           <DayCalendar
             value={selectedDate}
             minDate={minDate}
             maxDate={maxDate}
             onDateChange={onDateChange}
           />
+        </Grid>
+        <Grid item>
+          <DailyChart dayData={dayData} />
         </Grid>
       </Grid>
     </div>
