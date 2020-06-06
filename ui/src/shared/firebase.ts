@@ -19,7 +19,7 @@ if (!firebase.apps.length) {
 const firestore = firebase.firestore();
 
 const uiConfig = {
-  signInFlow: "popup",
+  signInFlow: "redirect",
   signInSuccessUrl: "/daily",
   signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
 };
