@@ -1,7 +1,7 @@
 import Grid from "@material-ui/core/Grid";
 import dayjs, { Dayjs } from "dayjs";
 import React, { useEffect, useState } from "react";
-import db from "../../shared/firestore";
+import { fdb } from "../../shared/firebase";
 import { DayData, EMPTY_YESTERDAY, fromFirestoreDoc } from "../models/DayData";
 import DailyChart from "./DailyChart";
 import DayCalendar from "./DayCalendar";
@@ -15,13 +15,13 @@ function Daily() {
   );
 
   useEffect(() => {
-    const latestDaily = db
+    const latestDaily = fdb
       .collection("sites")
       .doc("6408091979")
       .collection("dailies")
       .orderBy("interval_date", "desc")
       .limit(1);
-    const earliestDaily = db
+    const earliestDaily = fdb
       .collection("sites")
       .doc("6408091979")
       .collection("dailies")
@@ -60,7 +60,7 @@ function Daily() {
   const onDateChange = (date: Dayjs) => {
     if (date && (date.isSame(minDate) || date.isAfter(minDate))) {
       updateSelectedDate(date);
-      const docRef = db
+      const docRef = fdb
         .collection("sites")
         .doc("6408091979")
         .collection("dailies")
